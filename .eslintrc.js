@@ -6,7 +6,7 @@ module.exports = {
       'plugin:@typescript-eslint/recommended'
     ],
     rules: {
-      'no-console': 'warn',
+      'no-console': 'off',
       '@typescript-eslint/explicit-function-return-type': 'error'
     }
   }

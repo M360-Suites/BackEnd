@@ -1,4 +1,4 @@
-import express, {Request, Response, NextFunction} from 'express';
+import express, {Request, Response} from 'express';
 import { readdirSync } from 'fs';
 import path from 'path';
 import helmet from 'helmet';
@@ -37,7 +37,7 @@ app.get('/api/test', (req, res) => {
 });
 
 // Api Routes
-(async () => {
+(async (): Promise<void> => {
   const routeFiles = readdirSync(path.join(__dirname, 'Routes'));
   for (const file of routeFiles) {
     if (file.endsWith('.js') || (process.env.NODE_ENV === 'development' && file.endsWith('.ts'))) {
@@ -48,7 +48,7 @@ app.get('/api/test', (req, res) => {
 })();
 
 // Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response) => {
   console.error(err.stack);
   res.status(500).json({ 
     error: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,

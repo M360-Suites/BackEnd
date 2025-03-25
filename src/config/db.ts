@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 // Create database connection cache
 let cachedDb: typeof mongoose | null = null;
 
-async function connectToDatabase() {
+async function connectToDatabase():Promise<typeof mongoose> {
   if (cachedDb) {
     return cachedDb;
   }
