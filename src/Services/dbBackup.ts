@@ -51,9 +51,9 @@ async function performBackup() {
 // For 3 minutes testing:
 // setInterval(performBackup, 3 * 60 * 1000);
 
-// logger.info(
-//   "MongoDB backup script is running. Backups will be performed every 24 hours."
-// );
+logger.info(
+  "MongoDB backup script is running. Backups will be performed every 24 hours."
+);
 
 // Clean up files older than 24 hours every day at 3 AM
 cron.schedule("0 3 * * *", () => {

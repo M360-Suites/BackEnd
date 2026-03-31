@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import { logger } from "../../logger/logger";
 import { resSender } from "../../Services/responseService";
 import { asyncHandler } from "../../helpers/utils";
@@ -6,10 +6,10 @@ import Joi from "joi";
 import validationSchema from "../../Services/validationSchema";
 import { User, UserRoles } from "../../Models/User";
 import { modifyUserResponse } from "../../Services/modifyUserResponse";
-import { sendMail } from "../../Services/newMailService";
-import { accountAccessMail } from "../../Mails/accessMail";
-import { generateToken, verifyToken } from "../../Services/tokenService";
-import { resetPassword } from "../AuthControllers/forgetPassword";
+// import { sendMail } from "../../Services/newMailService";
+// import { accountAccessMail } from "../../Mails/accessMail";
+import { verifyToken } from "../../Services/tokenService";
+// import { resetPassword } from "../AuthControllers/forgetPassword";
 import { CustomRequest } from "../../Types/CustomRequest";
 
 export const getAuthAccount = asyncHandler(

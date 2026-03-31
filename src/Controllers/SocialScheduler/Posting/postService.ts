@@ -1,34 +1,28 @@
-import { SocialConnectionModel } from "../../../Models/SocialModels";
-import { decrypt } from "../../../Services/encryption";
-import oauthService from "../Auth/oauth-Service";
-import {
-  PostContent,
-  PostResult,
-  SocialConnection,
-  SocialPlatform,
-} from "../../../Types/types";
-import { BasePoster } from "./basePoster";
-import { FacebookPoster } from "./facebookPoster";
-import { InstagramPoster } from "./instaPoster";
-import { LinkedInPoster } from "./linkedInPoster";
-import { PinterestPoster } from "./pinterestPoster";
-import { TikTokPoster } from "./tiktokPoster";
-import { TwitterPoster } from "./twitterPoster";
-import { YouTubePoster } from "./youtubePoster";
-import { isOauthTokenExpired } from "../../../Services/tokenService";
+import { SocialConnectionModel } from '../../../Models/SocialModels';
+import { decrypt } from '../../../Services/encryption';
+import oauthService from '../Auth/oauth-service';
+import { PostContent, PostResult, SocialConnection, SocialPlatform } from '../../../Types/types';
+import { BasePoster } from './basePoster';
+import { FacebookPoster } from './facebookPoster';
+import { InstagramPoster } from './instaPoster';
+import { LinkedInPoster } from './linkedInPoster';
+import { PinterestPoster } from './pinterestPoster';
+import { TikTokPoster } from './tiktokPoster';
+import { TwitterPoster } from './twitterPoster';
+import { YouTubePoster } from './youtubePoster';
+import { isOauthTokenExpired } from '../../../Services/tokenService';
 
 export const post = async (
   orgId: string,
   platform: SocialPlatform,
-  content: PostContent
+  content: PostContent,
 ): Promise<PostResult> => {
   try {
     let connection = (await SocialConnectionModel.findOne({
       orgId,
       platform,
     })) as SocialConnection;
-    if (!connection)
-      throw new Error(`No authentication found for platform '${platform}'`);
+    if (!connection) throw new Error(`No authentication found for platform '${platform}'`);
 
     // console.log('Initial connection: ', connection);
     // console.log('Access token: ', decrypt(connection.accessToken));
@@ -36,7 +30,7 @@ export const post = async (
     // Check if token needs refresh
     if (isOauthTokenExpired(connection)) {
       try {
-        console.log("Token expired, refreshing...");
+        console.log('Token expired, refreshing...');
         const refreshedConnection = await oauthService.refreshToken(connection);
         // console.log("Refershed connection: ", refreshedConnection);
         // console.log('New accessToken: ', decrypt(refreshedConnection.accessToken));
@@ -46,7 +40,7 @@ export const post = async (
       } catch (err: any) {
         return {
           success: false,
-          error: err.message || "Token refresh failed. Please re-authenticate.",
+          error: err.message || 'Token refresh failed. Please re-authenticate.',
           platform,
         };
       }
@@ -70,17 +64,14 @@ export const post = async (
 export const postToMultiplePlatforms = async (
   orgId: string,
   platforms: SocialPlatform[],
-  content: PostContent
+  content: PostContent,
 ): Promise<PostResult[]> => {
   const promises = platforms.map((platform) => post(orgId, platform, content));
 
   return await Promise.all(promises);
 };
 
-const createPoster = (
-  platform: SocialPlatform,
-  connection: SocialConnection
-): BasePoster => {
+const createPoster = (platform: SocialPlatform, connection: SocialConnection): BasePoster => {
   switch (platform) {
     case SocialPlatform.FACEBOOK:
       return new FacebookPoster(connection);

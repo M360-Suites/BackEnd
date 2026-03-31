@@ -12,6 +12,7 @@ export const errorFunction = (scenarioName: any) => {
 
 // A utility function to wrap async controllers
 export const asyncHandler =
-  (fn: Function) => (req: CustomRequest, res: Response, next: NextFunction) => {
+  <T extends (...args: any[]) => any>(fn: T) =>
+  (req: CustomRequest, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(errorFunction(next));
   };

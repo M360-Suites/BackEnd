@@ -1,4 +1,5 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { AxiosInstance } from 'axios';
+import crypto from 'crypto';
 
 export class PaystackService {
   private client: AxiosInstance;
@@ -7,10 +8,10 @@ export class PaystackService {
   constructor() {
     this.secretKey = process.env.PAYSTACK_TEST_SECRET_KEY!;
     this.client = axios.create({
-      baseURL: "https://api.paystack.co",
+      baseURL: 'https://api.paystack.co',
       headers: {
         Authorization: `Bearer ${this.secretKey}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
     });
   }
@@ -24,17 +25,17 @@ export class PaystackService {
     access_code: string;
     reference: string;
   }> {
-    const response = await this.client.post("/transaction/initialize", {
+    const response = await this.client.post('/transaction/initialize', {
       email,
       amount, // 5000 kobo = ₦50
-      channels: ["card"],
+      channels: ['card'],
       callback_url: `${process.env.CLIENT_URL}/payment/verify`,
       metadata: {
         custom_fields: [
           {
-            display_name: "Purpose",
-            variable_name: "purpose",
-            value: "card_authorization",
+            display_name: 'Purpose',
+            variable_name: 'purpose',
+            value: 'card_authorization',
           },
         ],
       },
@@ -67,13 +68,13 @@ export class PaystackService {
   async createPlan(
     name: string,
     amount: number,
-    interval: "monthly" | "yearly" = "monthly",
+    interval: 'monthly' | 'yearly' = 'monthly',
   ): Promise<{
     plan_code: string;
     name: string;
     amount: number;
   }> {
-    const response = await this.client.post("/plan", {
+    const response = await this.client.post('/plan', {
       name,
       amount,
       interval,
@@ -108,16 +109,13 @@ export class PaystackService {
       payload.start_date = startDate.toISOString();
     }
 
-    const response = await this.client.post("/subscription", payload);
+    const response = await this.client.post('/subscription', payload);
     return response.data.data;
   }
 
   // Disable subscription
-  async disableSubscription(
-    subscriptionCode: string,
-    emailToken: string,
-  ): Promise<void> {
-    await this.client.post("/subscription/disable", {
+  async disableSubscription(subscriptionCode: string, emailToken: string): Promise<void> {
+    await this.client.post('/subscription/disable', {
       code: subscriptionCode,
       token: emailToken,
     });
@@ -125,9 +123,7 @@ export class PaystackService {
 
   // Get subscription details
   async getSubscription(subscriptionCodeOrId: string): Promise<any> {
-    const response = await this.client.get(
-      `/subscription/${subscriptionCodeOrId}`,
-    );
+    const response = await this.client.get(`/subscription/${subscriptionCodeOrId}`);
     return response.data.data;
   }
 
@@ -142,21 +138,18 @@ export class PaystackService {
     status: string;
     amount: number;
   }> {
-    const response = await this.client.post(
-      "/transaction/charge_authorization",
-      {
-        email,
-        amount,
-        authorization_code: authorizationCode,
-        reference: reference || `proration_${Date.now()}`,
-      },
-    );
+    const response = await this.client.post('/transaction/charge_authorization', {
+      email,
+      amount,
+      authorization_code: authorizationCode,
+      reference: reference || `proration_${Date.now()}`,
+    });
     return response.data.data;
   }
 
   // Refund transaction (for auth charge refund)
   async refundTransaction(reference: string): Promise<any> {
-    const response = await this.client.post("/refund", {
+    const response = await this.client.post('/refund', {
       transaction: reference,
     });
     return response.data.data;
@@ -164,11 +157,7 @@ export class PaystackService {
 
   // Verify webhook signature
   verifyWebhookSignature(payload: string, signature: string): boolean {
-    const crypto = require("crypto");
-    const hash = crypto
-      .createHmac("sha512", this.secretKey)
-      .update(payload)
-      .digest("hex");
+    const hash = crypto.createHmac('sha512', this.secretKey).update(payload).digest('hex');
     return hash === signature;
   }
 }

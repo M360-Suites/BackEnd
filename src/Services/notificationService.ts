@@ -24,6 +24,7 @@ export const addNotification = async (
 
     return notification;
   } catch (error) {
+    console.log('Error');
     throw error;
   }
 };
@@ -35,6 +36,7 @@ export const getUserNotifications = async (userId: Types.ObjectId) => {
     });
     return notifications;
   } catch (error) {
+    console.log('Error');
     throw error;
   }
 };
@@ -46,6 +48,7 @@ export const getUserNotificationById = async (
     let notification = await Notification.findById(notificationId);
     return notification;
   } catch (error) {
+    console.log('Error');
     throw error;
   }
 };

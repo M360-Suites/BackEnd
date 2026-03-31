@@ -84,6 +84,7 @@ export const createAndSendOtp = async (
       });
     return sent;
   } catch (error) {
+    console.log('Error')
     throw error;
   }
 };
@@ -124,6 +125,7 @@ export const verifyOtp = async (
     });
     return token;
   } catch (error) {
+    console.log('Error');
     throw error;
   }
 };

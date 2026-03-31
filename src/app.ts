@@ -1,33 +1,32 @@
-import express, { Request, Response } from "express";
-import fs, { readdirSync } from "fs";
-import path from "path";
-import helmet from "helmet";
-import morgan from "morgan";
-import { config } from "dotenv";
-import http from "http";
-import cors from "cors";
-import corsOptions from "./config/cors";
-import connectToDatabase from "./config/db";
-import pinoHttp from "pino-http";
-import { logger } from "./logger/logger";
-import { initMonitoring } from "./monitoring/monitoring";
-import { useSocket } from "./Services/websocket";
-import passport from "passport";
-import rateLimit from "express-rate-limit";
-import { resSender } from "./Services/responseService";
-import session from "express-session";
-import { CipherKey } from "crypto";
-import { startTrialExpirationJob } from "./jobs/trialExpirationJob";
-import { startGraceExpiredJob } from "./jobs/graceExpiredJob";
-require("./config/passport/google");
-require("./config/passport/microsoft");
+import express, { Request, Response } from 'express';
+import fs, { readdirSync } from 'fs';
+import path from 'path';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import { config } from 'dotenv';
+import http from 'http';
+import cors from 'cors';
+import corsOptions from './config/cors';
+import connectToDatabase from './config/db';
+import pinoHttp from 'pino-http';
+import { logger } from './logger/logger';
+import { initMonitoring } from './monitoring/monitoring';
+import { useSocket } from './Services/websocket';
+import passport from 'passport';
+import rateLimit from 'express-rate-limit';
+import { resSender } from './Services/responseService';
+import session from 'express-session';
+import { CipherKey } from 'crypto';
+import { startTrialExpirationJob } from './jobs/trialExpirationJob';
+import { startGraceExpiredJob } from './jobs/graceExpiredJob';
+import './config/passport/google';
+import './config/passport/microsoft';
 
 // Database Backup
-require("./Services/dbBackup");
+import './Services/dbBackup';
 
 // Load environment variables
 config();
-
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -60,7 +59,7 @@ initMonitoring(app);
 // Middlewares
 app.use(cors(corsOptions));
 app.use(helmet());
-app.use(morgan("dev"));
+app.use(morgan('dev'));
 app.use(httpLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -69,27 +68,27 @@ app.use(
     secret: process.env.SITE_KEY as CipherKey,
     resave: false,
     saveUninitialized: true,
-  })
+  }),
 );
 app.use(passport.initialize());
 app.use(passport.session());
 
 // Health check route
-app.get("/health", (req, res) => {
+app.get('/health', (req, res) => {
   let timestamp = new Date().toISOString();
-  resSender(res, 200, "success", "Health check route is working!", null, timestamp);
+  resSender(res, 200, 'success', 'Health check route is working!', null, timestamp);
 });
 
 // Test route
-app.get("/", (req, res) => {
-  return resSender(res, 200, "success", "Root Test route is working!");
+app.get('/', (req, res) => {
+  return resSender(res, 200, 'success', 'Root Test route is working!');
 });
 app.get('/tiktok5JMKIPJ6j5e7Tqgw3TmMrG0vPL8Uz4mP.txt', (req, res) => {
   const filePath = path.join(__dirname, 'public/tiktok5JMKIPJ6j5e7Tqgw3TmMrG0vPL8Uz4mP.txt');
   res.sendFile(filePath);
 });
-app.get("/api/test", (req, res) => {
-  return resSender(res, 200, "success", "Test route is working!");
+app.get('/api/test', (req, res) => {
+  return resSender(res, 200, 'success', 'Test route is working!');
 });
 
 // Api Routes
@@ -97,59 +96,58 @@ app.get("/api/test", (req, res) => {
 // console.log('Looking for routes in:', path.join(__dirname, 'Routes'));
 // console.log('Found files:', readdirSync(path.join(__dirname, 'Routes')));
 // Register routes dynamically from the 'Routes' directory
-const routeFiles = readdirSync(path.join(__dirname, "Routes"));
-for (const file of routeFiles) {
-  if (
-    file.endsWith(".js") ||
-    (process.env.NODE_ENV === "development" && file.endsWith(".ts"))
-  ) {
-    const routePath = path.join(__dirname, "Routes", file);
-    const route = require(routePath).default;
+async function loadRoutes() {
+  const routeFiles = readdirSync(path.join(__dirname, 'Routes'));
 
-    if (route) {
-      app.use("/api", route);
-      // console.log(`Registered routes from ${file}`);
-    }
+  for (const file of routeFiles) {
+    if (file.endsWith('.js') || (process.env.NODE_ENV === 'development' && file.endsWith('.ts'))) {
+      try {
+        const routePath = path.join(__dirname, 'Routes', file);
+        const routeModule = await import(routePath);
+        const route = routeModule.default;
 
-    // Log the routes that were registered
-    if (route.default && route.default.stack) {
-      logger.info(
-        `Routes in ${file}:`,
-        route.default.stack.map((r: any) => r.route?.path).filter(Boolean)
-      );
+        if (route) {
+          app.use('/api', route);
+        }
+
+        if (route && route.stack) {
+          logger.info(
+            `Routes in ${file}:`,
+            route.stack.map((r: any) => r.route?.path).filter(Boolean),
+          );
+        }
+      } catch (error) {
+        logger.error(`Failed to load route from ${file}:`, error);
+      }
     }
   }
 }
 
+// Call the async function
+loadRoutes().catch(console.error);
+
 // Catch unhandled routes
 app.use((req, res, next) => {
-  return resSender(res, 404, "error", "Route not found!");
+  return resSender(res, 404, 'error', 'Route not found!');
 });
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response) => {
   logger.error(err.stack);
-  logger.error({ error: err }, "Unhandled error");
+  logger.error({ error: err }, 'Unhandled error');
   res.status(500).json({
-    error:
-      process.env.NODE_ENV === "production"
-        ? "Internal Server Error"
-        : err.message,
+    error: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
   });
   return resSender(
     res,
     500,
-    "error",
-    `${
-      process.env.NODE_ENV === "production"
-        ? "Internal Server Error"
-        : err.message
-    }`
+    'error',
+    `${process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message}`,
   );
 });
 
 // Ensure the temp directory exists
-const tempDir = path.join(__dirname, "../temp");
+const tempDir = path.join(__dirname, '../temp');
 if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir, { recursive: true });
 }
@@ -166,19 +164,19 @@ connectToDatabase()
     });
   })
   .catch((err) => {
-    logger.error("Error connecting to DB: ", err);
+    logger.error('Error connecting to DB: ', err);
   });
 
-server.on("error", (e: any) => {
-  if (e.code === "EADDRINUSE") {
-    console.error("Address in use, retrying...");
+server.on('error', (e: any) => {
+  if (e.code === 'EADDRINUSE') {
+    console.error('Address in use, retrying...');
     setTimeout(() => {
       server.close();
       server.listen(PORT);
     }, 2000);
   }
-  if (e.code === "EADDRINUSE") {
-    console.error("Address in use, retrying...");
+  if (e.code === 'EADDRINUSE') {
+    console.error('Address in use, retrying...');
     setTimeout(() => {
       server.close();
       server.listen(PORT);

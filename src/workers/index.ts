@@ -55,10 +55,10 @@ export function setupWorkers() {
   queueService.setupKeywordWorker(async (job) => {
     // Keyword tracking worker implementation
     // Similar pattern as above
-    const {} = job.data;
+    const {name} = job.data;
 
     try {
-      
+      console.log('Data: ', job.data);
     } catch (error: any) {
       throw new Error(`Traffic scan failed: ${error.message}`);
     }

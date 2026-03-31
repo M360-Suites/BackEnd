@@ -286,6 +286,7 @@ class MailOauthService {
 
     try {
       if (platform === MailPlatform.ZOHO) {
+        console.log('Trying Zoho');
       } else {
         const response = await axios.get(endpoints[platform], {
           headers: { Authorization: `Bearer ${accessToken}` },

@@ -1,6 +1,6 @@
 // AdsAnalyticsController.ts - Complete implementation using AdManager
 
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { resSender } from '../../../Services/responseService';
 import { AdManager } from './AdManager';
 import {
@@ -31,7 +31,7 @@ export class AdsAnalyticsController {
     this.adManager = new AdManager();
   }
 
-  private async getPlatformClient(platform: AdsPlatform, connection: AdsConnection) {
+  private async getPlatformClient(platform: AdsPlatform, connection: AdsConnection): Promise<any> {
     const baseConfig = {
       accessToken: decrypt(connection.accessToken),
       adAccountId: connection.accountId,
@@ -121,7 +121,7 @@ export class AdsAnalyticsController {
     return connection;
   }
 
-  private async setupClient(platform: AdsPlatform, connection: AdsConnection) {
+  private async setupClient(platform: AdsPlatform, connection: AdsConnection): Promise<any> {
     const refreshedConnection = await this.refreshConnectionIfNeeded(connection);
     const client = await this.getPlatformClient(platform, refreshedConnection);
     this.adManager.registerClient(platform, client);

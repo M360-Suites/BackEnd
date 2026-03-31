@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { resSender } from "../Services/responseService";
 import { CustomRequest } from "../Types/CustomRequest";
 
-const fs = require("fs");
+import fs from "fs";
 
 export const uploadMiddleware = async (req: CustomRequest, res: Response, next: NextFunction) => {
   try {

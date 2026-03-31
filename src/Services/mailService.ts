@@ -3,6 +3,11 @@ import fs from "fs";
 import { promisify } from "util";
 import path from "path";
 import { logger } from "../logger/logger";
+import { google } from 'googleapis';
+import { AuthProvider, Client } from '@microsoft/microsoft-graph-client';
+import axios from 'axios';
+import { decrypt } from './encryption';
+import { error } from 'console';
 
 const readFileAsync = promisify(fs.readFile);
 
@@ -88,11 +93,7 @@ export const sendMail = async (
   });
 };
 
-import { google } from "googleapis";
-import { Client } from "@microsoft/microsoft-graph-client";
-import axios from "axios";
-import { decrypt } from "./encryption";
-import { error } from "console";
+
 
 interface TokenRecord {
   provider: string | "google" | "microsoft" | "zoho" | "custom";
@@ -201,9 +202,11 @@ async function sendViaMicrosoft(
   subject: string,
   text: string
 ) {
-  const client = Client.init({
-    authProvider: (done: Function) => done(null, token.accessToken!),
-  });
+  const authProvider: AuthProvider = (done) => {
+    done(null, token.accessToken!);
+  };
+
+  const client = Client.init({ authProvider });
 
   return client.api("/me/sendMail").post({
     message: {

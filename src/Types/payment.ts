@@ -21,7 +21,7 @@ export interface InitTransaction {
   channels: string[];
   reference: string;
   callback_url: string;
-  metadata?: Object;
+  metadata?: object;
 }
 
 export enum Currency {

@@ -5,7 +5,7 @@ export enum NotificationType {
   "Website builder",
   "Community Manager",
   "Ads Manager",
-};
+}
 
 export interface Domains {
     [key: string]: {

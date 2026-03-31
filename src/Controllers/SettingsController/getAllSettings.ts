@@ -31,6 +31,7 @@ export const retrieveSetting = async (userId: string) => {
     const setting = await Settings.findOne({ userId });
     return setting;
   } catch (error) {
+    console.log('Error');
     throw error;
   }
 };

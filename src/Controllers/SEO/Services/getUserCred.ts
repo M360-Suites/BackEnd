@@ -63,6 +63,7 @@ export const getUserCreds = async (
     }
     return rCred;
   } catch (error) {
+    console.log('Error')
     throw error;
   }
 };

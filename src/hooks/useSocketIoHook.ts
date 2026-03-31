@@ -1,7 +1,7 @@
 import { Request } from "express";
 import { CustomRequest } from "../Types/CustomRequest";
 
-const { getIoInstance } = require("../helper");
+import { getIoInstance } from "../Services/websocket";
 const io = getIoInstance(); // Get the io instance
 
 const useSocketIoHook = () => {

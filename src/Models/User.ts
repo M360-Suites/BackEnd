@@ -73,8 +73,8 @@ export interface IOrganization extends Document {
   // trialStartsAt?: Date;
   // trialEndsAt?: Date;
   websites: Schema.Types.ObjectId[];
-  adAndSocials: Object;
-  community: Object;
+  adAndSocials: object;
+  community: object;
   currency: Currency;
   emailAutoOnboarding: number;
   accessEmails: Schema.Types.ObjectId[];

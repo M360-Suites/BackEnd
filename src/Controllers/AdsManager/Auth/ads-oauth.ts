@@ -25,7 +25,7 @@ class AdsOauth {
     restliClient: RestliClient;
   } {
     const clientUrl = process.env.CLIENT_URL!;
-    const platform = "linkedin";
+    const platform = 'linkedin';
     const config = ADS_CONFIGS[platform];
 
     const authClient = new AuthClient({
@@ -41,7 +41,7 @@ class AdsOauth {
 
   async generateAuthUrl(
     platform: AdsPlatform,
-    orgId: string
+    orgId: string,
   ): Promise<{ url: string; csrfState: Uint8Array }> {
     let array = new Uint8Array(30);
     const csrfState = crypto.getRandomValues(array);
@@ -51,35 +51,30 @@ class AdsOauth {
     if (platform === AdsPlatform.TWITTER) {
       return await this.generateTwitterOAuth1Url(state);
     } else if (platform === AdsPlatform.TIKTOK) {
-      let url = new URL("https://www.tiktok.com/v2/auth/authorize");
+      let url = new URL('https://www.tiktok.com/v2/auth/authorize');
       let codeVerifier = this.generateCodeVerifier();
       let codeChallenge = this.generateCodeChallenge(codeVerifier);
 
       this.codeVerifiers.set(state, codeVerifier);
-      console.log(
-        `TikTok: Stored code_verifier for state ${state}: ${codeVerifier}`
-      );
+      console.log(`TikTok: Stored code_verifier for state ${state}: ${codeVerifier}`);
 
-      url.searchParams.append("client_key", config.clientId);
+      url.searchParams.append('client_key', config.clientId);
       url.searchParams.append(
-        "scope",
-        "user.info.basic,video.upload,video.publish,user.info.profile"
+        'scope',
+        'user.info.basic,video.upload,video.publish,user.info.profile',
       );
-      url.searchParams.append("response_type", "code");
-      url.searchParams.append("redirect_uri", config.redirectUri);
-      url.searchParams.append("state", state);
-      url.searchParams.append("disable_auto_auth", "1");
-      url.searchParams.append("code_challenge", codeChallenge);
-      url.searchParams.append("code_challenge_method", "S256");
+      url.searchParams.append('response_type', 'code');
+      url.searchParams.append('redirect_uri', config.redirectUri);
+      url.searchParams.append('state', state);
+      url.searchParams.append('disable_auto_auth', '1');
+      url.searchParams.append('code_challenge', codeChallenge);
+      url.searchParams.append('code_challenge_method', 'S256');
 
       console.log(`TikTok: Generated auth URL: ${url.toString()}`);
       return { url: url.toString(), csrfState };
     } else if (platform === AdsPlatform.LINKEDIN) {
       const { authClient } = this.setUpLinkedinClient();
-      const url = authClient.generateMemberAuthorizationUrl(
-        config.scopes,
-        state
-      );
+      const url = authClient.generateMemberAuthorizationUrl(config.scopes, state);
       console.log(`LinkedIn: Generated auth URL: ${url}`);
       return { url, csrfState };
     }
@@ -87,10 +82,10 @@ class AdsOauth {
     const params = new URLSearchParams({
       client_id: config.clientId,
       redirect_uri: config.redirectUri,
-      scope: config.scopes.join(" "),
-      response_type: "code",
-      prompt: "consent",
-      access_type: "offline",
+      scope: config.scopes.join(' '),
+      response_type: 'code',
+      prompt: 'consent',
+      access_type: 'offline',
       state: state,
     });
 
@@ -100,55 +95,49 @@ class AdsOauth {
   }
 
   private async generateTwitterOAuth1Url(
-    state: string
+    state: string,
   ): Promise<{ url: string; csrfState: Uint8Array }> {
     const consumerKey = process.env.TWITTER_CONSUMER_KEY!;
     const consumerSecret = process.env.TWITTER_CONSUMER_SECRET!;
     const config = ADS_CONFIGS[AdsPlatform.TWITTER];
 
     if (!consumerKey || !consumerSecret) {
-      throw new Error(
-        "Missing Twitter consumer key or secret in environment variables"
-      );
+      throw new Error('Missing Twitter consumer key or secret in environment variables');
     }
 
     const oauthParams = {
       oauth_callback: config.redirectUri,
       oauth_consumer_key: consumerKey,
-      oauth_nonce: crypto.randomBytes(16).toString("hex"),
-      oauth_signature_method: "HMAC-SHA1",
+      oauth_nonce: crypto.randomBytes(16).toString('hex'),
+      oauth_signature_method: 'HMAC-SHA1',
       oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
-      oauth_version: "1.0",
+      oauth_version: '1.0',
     };
 
     const signature = this.generateOAuth1Signature(
-      "POST",
-      "https://api.twitter.com/oauth/request_token",
+      'POST',
+      'https://api.twitter.com/oauth/request_token',
       oauthParams,
       consumerSecret,
-      ""
+      '',
     );
 
-    console.log('Sig: ', signature)
+    console.log('Sig: ', signature);
 
     const authHeader = Object.entries(oauthParams)
-      .concat([["oauth_signature", signature]])
+      .concat([['oauth_signature', signature]])
       .map(([key, value]) => `${key}="${encodeURIComponent(value)}"`)
-      .join(", ");
+      .join(', ');
 
     const fullAuthHeader = `OAuth ${authHeader}`;
 
     try {
-      const response = await axios.post(
-        "https://api.twitter.com/oauth/request_token",
-        null,
-        {
-          headers: {
-            Authorization: fullAuthHeader,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-        }
-      );
+      const response = await axios.post('https://api.twitter.com/oauth/request_token', null, {
+        headers: {
+          Authorization: fullAuthHeader,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
 
       const tokenData = qs.parse(response.data);
       console.log('Got data: ', tokenData);
@@ -161,12 +150,10 @@ class AdsOauth {
         state,
       });
 
-      console.log(
-        `Twitter Ads: Obtained request_token for state ${state}: ${requestToken}`
-      );
+      console.log(`Twitter Ads: Obtained request_token for state ${state}: ${requestToken}`);
 
       const authUrl = `https://api.twitter.com/oauth/authorize?oauth_token=${requestToken}&oauth_callback=${encodeURIComponent(
-        config.redirectUri
+        config.redirectUri,
       )}`;
 
       let array = new Uint8Array(30);
@@ -174,12 +161,12 @@ class AdsOauth {
 
       return { url: authUrl, csrfState };
     } catch (error: any) {
-      console.error("Twitter OAuth 1.0a request token error:", {
+      console.error('Twitter OAuth 1.0a request token error:', {
         error: error.response?.data?.errors || error.message,
         status: error.response?.status,
       });
       throw new Error(
-        `Twitter OAuth Error: ${error.response?.data?.errors[0].message || error.message}`
+        `Twitter OAuth Error: ${error.response?.data?.errors[0].message || error.message}`,
       );
     }
   }
@@ -188,7 +175,7 @@ class AdsOauth {
     code: string,
     state: string,
     oauthToken?: string,
-    oauthVerifier?: string
+    oauthVerifier?: string,
   ): Promise<AdsConnection> {
     const { orgId, platform } = this.parseState(state);
     const config = ADS_CONFIGS[platform];
@@ -200,41 +187,30 @@ class AdsOauth {
       let refreshToken: string | undefined;
       let expiresIn: number | undefined;
       let userInfo: { id: string; name: string; [key: string]: any } = {
-        id: "",
-        name: "",
+        id: '',
+        name: '',
       };
 
       if (platform === AdsPlatform.TWITTER && oauthToken && oauthVerifier) {
         // Twitter OAuth 1.0a flow
         console.log(
-          `Handling Twitter OAuth 1.0a callback with oauth_token: ${oauthToken}, oauth_verifier: ${oauthVerifier}`
+          `Handling Twitter OAuth 1.0a callback with oauth_token: ${oauthToken}, oauth_verifier: ${oauthVerifier}`,
         );
-        tokenResponse = await this.exchangeTwitterOAuth1Token(
-          oauthToken,
-          oauthVerifier,
-          state
-        );
+        tokenResponse = await this.exchangeTwitterOAuth1Token(oauthToken, oauthVerifier, state);
         accessToken = tokenResponse.oauth_token;
         accessTokenSecret = tokenResponse.oauth_token_secret;
         userInfo.id = tokenResponse.user_id;
         userInfo.name = tokenResponse.screen_name;
       } else if (code && state) {
         // OAuth 2.0 flow for other platforms
-        console.log(
-          `Handling OAuth 2.0 callback with code: ${code}, state: ${state}`
-        );
-        tokenResponse = await this.exchangeCodeForToken(
-          code,
-          config,
-          platform,
-          state
-        );
-        console.log("Token res: ", tokenResponse);
+        console.log(`Handling OAuth 2.0 callback with code: ${code}, state: ${state}`);
+        tokenResponse = await this.exchangeCodeForToken(code, config, platform, state);
+        console.log('Token res: ', tokenResponse);
         accessToken = tokenResponse.access_token;
         refreshToken = tokenResponse.refresh_token;
         expiresIn = tokenResponse.expires_in;
       } else {
-        throw new Error("Missing required parameters for authentication");
+        throw new Error('Missing required parameters for authentication');
       }
 
       if (platform !== AdsPlatform.TWITTER) {
@@ -247,26 +223,20 @@ class AdsOauth {
           orgId,
           platform,
           accessToken: encrypt(accessToken),
-          accessTokenSecret: accessTokenSecret
-            ? encrypt(accessTokenSecret)
-            : undefined,
+          accessTokenSecret: accessTokenSecret ? encrypt(accessTokenSecret) : undefined,
           refreshToken: refreshToken ? encrypt(refreshToken) : undefined,
-          expiresAt: expiresIn
-            ? new Date(Date.now() + expiresIn * 1000)
-            : undefined,
+          expiresAt: expiresIn ? new Date(Date.now() + expiresIn * 1000) : undefined,
           refreshExpiresAt: tokenResponse.refresh_token_expires_in
-            ? new Date(
-                Date.now() + tokenResponse.refresh_token_expires_in * 1000
-              )
+            ? new Date(Date.now() + tokenResponse.refresh_token_expires_in * 1000)
             : undefined,
           accountId: userInfo.id || userInfo.data?.id,
           accountName: userInfo.name || userInfo.data?.name,
           scopes: config.scopes,
         },
-        { upsert: true, new: true }
+        { upsert: true, new: true },
       );
 
-      if (!connection) throw new Error("Connection not saved");
+      if (!connection) throw new Error('Connection not saved');
 
       // Clean up stored data
       if (platform === AdsPlatform.TWITTER) {
@@ -284,76 +254,68 @@ class AdsOauth {
         oauthToken,
         oauthVerifier,
       });
-      if (error.message.includes("duplicate key error collection")) {
-        throw new Error("Duplicate platforms not allowed!");
+      if (error.message.includes('duplicate key error collection')) {
+        throw new Error('Duplicate platforms not allowed!');
       }
       let errorMessage = extractErrorMessage(error as AxiosError);
-      throw new Error(
-        `OAuth callback failed for ${platform}: ${
-          errorMessage || error.message
-        }`
-      );
+      throw new Error(`OAuth callback failed for ${platform}: ${errorMessage || error.message}`);
     }
   }
 
   private async exchangeTwitterOAuth1Token(
     oauthToken: string,
     oauthVerifier: string,
-    state: string
+    state: string,
   ): Promise<any> {
     const consumerKey = process.env.TWITTER_CONSUMER_KEY!;
     const consumerSecret = process.env.TWITTER_CONSUMER_SECRET!;
 
     const requestTokenData = this.requestTokenData.get(state);
     if (!requestTokenData || requestTokenData.requestToken !== oauthToken) {
-      throw new Error("Invalid OAuth token or state");
+      throw new Error('Invalid OAuth token or state');
     }
 
     const oauthParams = {
       oauth_consumer_key: consumerKey,
       oauth_token: oauthToken,
       oauth_verifier: oauthVerifier,
-      oauth_nonce: crypto.randomBytes(16).toString("hex"),
-      oauth_signature_method: "HMAC-SHA1",
+      oauth_nonce: crypto.randomBytes(16).toString('hex'),
+      oauth_signature_method: 'HMAC-SHA1',
       oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
-      oauth_version: "1.0",
+      oauth_version: '1.0',
     };
 
     const signature = this.generateOAuth1Signature(
-      "POST",
-      "https://api.twitter.com/oauth/access_token",
+      'POST',
+      'https://api.twitter.com/oauth/access_token',
       oauthParams,
       consumerSecret,
-      requestTokenData.requestTokenSecret
+      requestTokenData.requestTokenSecret,
     );
 
     const authHeader = Object.entries(oauthParams)
-      .concat([["oauth_signature", signature]])
+      .concat([['oauth_signature', signature]])
       .map(([key, value]) => `${key}="${encodeURIComponent(value)}"`)
-      .join(", ");
+      .join(', ');
 
     const fullAuthHeader = `OAuth ${authHeader}`;
 
     try {
-      const response = await axios.post(
-        "https://api.twitter.com/oauth/access_token",
-        null,
-        {
-          headers: {
-            Authorization: fullAuthHeader,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-        }
-      );
+      const response = await axios.post('https://api.twitter.com/oauth/access_token', null, {
+        headers: {
+          Authorization: fullAuthHeader,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
 
       const tokenData = qs.parse(response.data);
-      console.log("Obtained tokens: ", {
+      console.log('Obtained tokens: ', {
         token: tokenData.oauth_token,
         secret: tokenData.oauth_token_secret,
       });
 
       console.log(
-        `Twitter Ads: Successfully obtained access token: ${tokenData.oauth_token} for user ${tokenData.screen_name}`
+        `Twitter Ads: Successfully obtained access token: ${tokenData.oauth_token} for user ${tokenData.screen_name}`,
       );
 
       return {
@@ -363,7 +325,7 @@ class AdsOauth {
         screen_name: tokenData.screen_name,
       };
     } catch (error: any) {
-      console.error("Twitter OAuth 1.0a access token error:", {
+      console.error('Twitter OAuth 1.0a access token error:', {
         error: error.response?.data || error.message,
       });
       throw error;
@@ -375,54 +337,43 @@ class AdsOauth {
     url: string,
     params: { [key: string]: string },
     consumerSecret: string,
-    tokenSecret: string
+    tokenSecret: string,
   ): string {
     const encodedParams = Object.keys(params)
       .sort()
-      .map(
-        (key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`
-      )
-      .join("&");
+      .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+      .join('&');
 
-    const baseString = `${method}&${encodeURIComponent(
-      url
-    )}&${encodeURIComponent(encodedParams)}`;
+    const baseString = `${method}&${encodeURIComponent(url)}&${encodeURIComponent(encodedParams)}`;
 
-    const signingKey = `${encodeURIComponent(
-      consumerSecret
-    )}&${encodeURIComponent(tokenSecret)}`;
+    const signingKey = `${encodeURIComponent(consumerSecret)}&${encodeURIComponent(tokenSecret)}`;
 
-    const signature = crypto
-      .createHmac("sha1", signingKey)
-      .update(baseString)
-      .digest("base64");
+    const signature = crypto.createHmac('sha1', signingKey).update(baseString).digest('base64');
 
     return signature;
   }
 
   async refreshToken(connection: AdsConnection): Promise<AdsConnection> {
     if (connection.platform === AdsPlatform.TWITTER) {
-      throw new Error(
-        "OAuth 1.0 tokens cannot be refreshed. Please re-authenticate."
-      );
+      throw new Error('OAuth 1.0 tokens cannot be refreshed. Please re-authenticate.');
     }
 
     if (!connection.refreshToken) {
-      throw new Error("No refresh token available");
+      throw new Error('No refresh token available');
     }
 
     const config = ADS_CONFIGS[connection.platform];
     const refreshToken = decrypt(connection.refreshToken);
 
     const headers: { [key: string]: string } = {
-      "Content-Type": "application/x-www-form-urlencoded",
+      'Content-Type': 'application/x-www-form-urlencoded',
     };
 
     const params = new URLSearchParams({
       client_id: config.clientId,
       client_secret: config.clientSecret,
       refresh_token: refreshToken,
-      grant_type: "refresh_token",
+      grant_type: 'refresh_token',
     });
 
     try {
@@ -430,7 +381,7 @@ class AdsOauth {
         headers,
       });
 
-      console.log("Refresh token response:", response.data);
+      console.log('Refresh token response:', response.data);
 
       const updatedConnection = await AdsConModel.findOneAndUpdate(
         { _id: connection._id },
@@ -444,11 +395,11 @@ class AdsOauth {
             : undefined,
           updatedAt: new Date(),
         },
-        { new: true }
+        { new: true },
       );
 
       if (!updatedConnection) {
-        throw new Error("Connection details not updated");
+        throw new Error('Connection details not updated');
       }
 
       return updatedConnection;
@@ -456,9 +407,7 @@ class AdsOauth {
       console.error(`Error refreshing token for ${connection.platform}:`, {
         error: error.response?.data || error.message,
       });
-      throw new Error(
-        `Token refresh failed for ${connection.platform}: ${error.message}`
-      );
+      throw new Error(`Token refresh failed for ${connection.platform}: ${error.message}`);
     }
   }
 
@@ -466,7 +415,7 @@ class AdsOauth {
     code: string,
     config: AdOAuthConfig,
     platform: AdsPlatform,
-    state?: string
+    state?: string,
   ): Promise<any> {
     if (platform === AdsPlatform.LINKEDIN) {
       const { authClient } = this.setUpLinkedinClient();
@@ -476,11 +425,11 @@ class AdsOauth {
     const params = new URLSearchParams({
       code,
       redirect_uri: config.redirectUri,
-      grant_type: "authorization_code",
+      grant_type: 'authorization_code',
     });
 
     const headers: { [key: string]: string } = {
-      "Content-Type": "application/x-www-form-urlencoded",
+      'Content-Type': 'application/x-www-form-urlencoded',
     };
 
     if (platform === AdsPlatform.TIKTOK) {
@@ -488,12 +437,12 @@ class AdsOauth {
       if (!codeVerifier) {
         throw new Error(`Code verifier not found for state ${state}`);
       }
-      params.append("client_key", config.clientId);
-      params.append("client_secret", config.clientSecret);
-      params.append("code_verifier", codeVerifier);
+      params.append('client_key', config.clientId);
+      params.append('client_secret', config.clientSecret);
+      params.append('code_verifier', codeVerifier);
     } else {
-      params.append("client_id", config.clientId);
-      params.append("client_secret", config.clientSecret);
+      params.append('client_id', config.clientId);
+      params.append('client_secret', config.clientSecret);
     }
 
     try {
@@ -512,25 +461,21 @@ class AdsOauth {
     }
   }
 
-  private async getUserInfo(
-    accessToken: string,
-    platform: AdsPlatform
-  ): Promise<any> {
+  private async getUserInfo(accessToken: string, platform: AdsPlatform): Promise<any> {
     const endpoints = {
-      [AdsPlatform.META]: "https://graph.facebook.com/me?fields=id,name",
-      [AdsPlatform.TWITTER]: "https://api.twitter.com/2/users/me",
-      [AdsPlatform.GOOGLE]: "https://www.googleapis.com/oauth2/v2/userinfo",
-      [AdsPlatform.LINKEDIN]: "https://api.linkedin.com/v2/userinfo",
-      [AdsPlatform.TIKTOK]:
-        "https://open.tiktokapis.com/v2/user/info/?fields=open_id,display_name",
-      [AdsPlatform.SNAPCHAT]: "https://api.pinterest.com/v5/user_account",
+      [AdsPlatform.META]: 'https://graph.facebook.com/me?fields=id,name',
+      [AdsPlatform.TWITTER]: 'https://api.twitter.com/2/users/me',
+      [AdsPlatform.GOOGLE]: 'https://www.googleapis.com/oauth2/v2/userinfo',
+      [AdsPlatform.LINKEDIN]: 'https://api.linkedin.com/v2/userinfo',
+      [AdsPlatform.TIKTOK]: 'https://open.tiktokapis.com/v2/user/info/?fields=open_id,display_name',
+      [AdsPlatform.SNAPCHAT]: 'https://api.pinterest.com/v5/user_account',
     };
 
     try {
       if (platform === AdsPlatform.LINKEDIN) {
         const { restliClient } = this.setUpLinkedinClient();
         const response = await restliClient.get({
-          resourcePath: "/userinfo",
+          resourcePath: '/userinfo',
           accessToken,
         });
         // console.log('AT: ', accessToken);
@@ -550,25 +495,25 @@ class AdsOauth {
         const oauthParams = {
           oauth_consumer_key: consumerKey,
           oauth_token: accessToken,
-          oauth_nonce: crypto.randomBytes(16).toString("hex"),
-          oauth_signature_method: "HMAC-SHA1",
+          oauth_nonce: crypto.randomBytes(16).toString('hex'),
+          oauth_signature_method: 'HMAC-SHA1',
           oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
-          oauth_version: "1.0",
+          oauth_version: '1.0',
         };
 
         // Note: In a real implementation, you need the access token secret from the connection
         const signature = this.generateOAuth1Signature(
-          "GET",
+          'GET',
           endpoints[platform],
           oauthParams,
           consumerSecret,
-          "" // Placeholder; replace with actual token secret
+          '', // Placeholder; replace with actual token secret
         );
 
         const authHeader = Object.entries(oauthParams)
-          .concat([["oauth_signature", signature]])
+          .concat([['oauth_signature', signature]])
           .map(([key, value]) => `${key}="${encodeURIComponent(value)}"`)
-          .join(", ");
+          .join(', ');
 
         const response = await axios.get(endpoints[platform], {
           headers: {
@@ -597,7 +542,7 @@ class AdsOauth {
       platform,
       timestamp: Date.now(),
     });
-    return Buffer.from(data).toString("base64");
+    return Buffer.from(data).toString('base64');
   }
 
   parseState(state: string): {
@@ -605,25 +550,25 @@ class AdsOauth {
     platform: AdsPlatform;
   } {
     try {
-      const data = JSON.parse(Buffer.from(state, "base64").toString());
+      const data = JSON.parse(Buffer.from(state, 'base64').toString());
       return {
         orgId: data.orgId,
         platform: data.platform,
       };
     } catch (error) {
-      console.error("Error parsing state:", error);
-      throw new Error("Invalid state parameter");
+      console.error('Error parsing state:', error);
+      throw new Error('Invalid state parameter');
     }
   }
 
   private generateCodeVerifier(): string {
-    return crypto.randomBytes(64).toString("base64url");
+    return crypto.randomBytes(64).toString('base64url');
   }
 
   private generateCodeChallenge(verifier: string): string {
-    const hash = crypto.createHash("sha256");
+    const hash = crypto.createHash('sha256');
     hash.update(verifier);
-    return hash.digest().toString("base64url").replace(/=/g, "");
+    return hash.digest().toString('base64url').replace(/=/g, '');
   }
 
   getStateFromToken(oauth_token: string): string | undefined {
@@ -635,7 +580,7 @@ class AdsOauth {
     return undefined;
   }
 
-  async revokeConnection(connection: AdsConnection) {
+  async revokeConnection(connection: AdsConnection): Promise<any> {
     await AdsConModel.findByIdAndDelete(connection._id);
   }
 }
