@@ -1,14 +1,20 @@
 {
-    "compilerOptions": {
-      "target": "es2020",
-      "module": "commonjs",
-      "outDir": "./dist",
-      "rootDir": "./src",
-      "strict": true,
-      "esModuleInterop": true,
-      "skipLibCheck": true,
-      "forceConsistentCasingInFileNames": true
-    },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules", "dist"]
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./@types", // Ensure this is present
+      "./src/Types"
+    ],
+    "types": ["node", "express"]
+  },
+  "include": ["src/**/*", "src/tests/signIn.test.ts", "src/tests/setup.ts", "src/Types/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

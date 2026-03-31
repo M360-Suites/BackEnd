@@ -1,5 +1,11 @@
 node_modules/
 dist/
+backups/
 .env
+.env.copy
+.env.test
 *.log
 .DS_Store
+.husky
+Note
+*.c

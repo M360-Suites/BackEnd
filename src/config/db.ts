@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { logger } from "../logger/logger";
 
 // Create database connection cache
 let cachedDb: typeof mongoose | null = null;
@@ -19,10 +20,10 @@ async function connectToDatabase():Promise<typeof mongoose> {
   try {
     const db = await mongoose.connect(dbUri);
     cachedDb = db;
-    console.log('Connected to MongoDB');
+    logger.info('Connected to MongoDB');
     return db;
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    logger.error('MongoDB connection error:', error);
     throw error;
   }
 }

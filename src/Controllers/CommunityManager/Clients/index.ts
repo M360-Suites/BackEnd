@@ -1,0 +1,9 @@
+export { ComPlatformClient } from "./ComPlatformClient";
+export { WhatsAppService } from "./WhatsappClient";
+export { FacebookService } from "./FacebookClient";
+export { LinkedInService } from "./LinkedinClient";
+export { TelegramService } from "./TelegramCLient";
+export { DiscordService } from "./DiscordClient";
+export { SlackService } from "./SlackClient";
+export { InstagramService } from "./InstagramClient";
+export { TwitterService } from "./TwitterClient";
