@@ -1,5 +1,5 @@
 node_modules/
-dist/
+# dist/
 backups/
 .env
 .env.copy

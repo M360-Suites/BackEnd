@@ -1,0 +1,20 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const signIn_1 = require("../Controllers/AuthControllers/signIn");
+const signup_1 = require("../Controllers/AuthControllers/signup");
+const googleAuth_1 = require("../Controllers/AuthControllers/googleAuth");
+const forgetPassword_1 = require("../Controllers/AuthControllers/forgetPassword");
+const authorizewithCred_1 = require("../Controllers/EmailAutomation/Auth/authorizewithCred");
+const route = (0, express_1.Router)();
+// Auth routes
+route.post("/auth/trial", signup_1.startTrial);
+route.post("/auth/signup", signup_1.signup);
+route.post("/auth/signin", signIn_1.signIn);
+route.get("/auth/google", googleAuth_1.googleLogin);
+route.get("/auth/google/callback", googleAuth_1.handleGoogleCallback, googleAuth_1.googleCallback);
+route.post("/auth/verify-code", forgetPassword_1.verifyCode);
+route.post("/auth/sendCode", forgetPassword_1.sendCode);
+route.post("/auth/reset-password", forgetPassword_1.resetPassword);
+route.post("/auth/provider", authorizewithCred_1.detectProvider);
+exports.default = route;
