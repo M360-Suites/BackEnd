@@ -96,35 +96,25 @@ app.get('/api/test', (req, res) => {
 // console.log('Looking for routes in:', path.join(__dirname, 'Routes'));
 // console.log('Found files:', readdirSync(path.join(__dirname, 'Routes')));
 // Register routes dynamically from the 'Routes' directory
-async function loadRoutes() {
-  const routeFiles = readdirSync(path.join(__dirname, 'Routes'));
+const routeFiles = readdirSync(path.join(__dirname, 'Routes'));
+for (const file of routeFiles) {
+  if (file.endsWith('.js') || (process.env.NODE_ENV === 'development' && file.endsWith('.ts'))) {
+    const routePath = path.join(__dirname, 'Routes', file);
+    /* eslint-disable @typescript-eslint/no-var-requires */
+    const route = require(routePath).default;
+    // console.log('Route 2: ', route);
 
-  for (const file of routeFiles) {
-    if (file.endsWith('.js') || (process.env.NODE_ENV === 'development' && file.endsWith('.ts'))) {
-      try {
-        const routePath = path.join(__dirname, 'Routes', file);
-        const routeModule = await import(routePath);
-        const route = routeModule.default;
+    if (route) {
+      app.use('/api', route);
+      // console.log(`Registered routes from ${file}`);
+    }
 
-        if (route) {
-          app.use('/api', route);
-        }
-
-        if (route && route.stack) {
-          logger.info(
-            `Routes in ${file}:`,
-            route.stack.map((r: any) => r.route?.path).filter(Boolean),
-          );
-        }
-      } catch (error) {
-        logger.error(`Failed to load route from ${file}:`, error);
-      }
+    // Log the routes that were registered
+    if (route && route.stack) {
+      logger.info(`Routes in ${file}:`, route.stack.map((r: any) => r.route?.path).filter(Boolean));
     }
   }
 }
-
-// Call the async function
-loadRoutes().catch(console.error);
 
 // Catch unhandled routes
 app.use((req, res, next) => {
@@ -164,7 +154,7 @@ connectToDatabase()
     });
   })
   .catch((err) => {
-    logger.error('Error connecting to DB: ', err);
+    console.error('Error connecting to DB: ', err);
   });
 
 server.on('error', (e: any) => {
