@@ -123,8 +123,8 @@ app.use((req, res, next) => {
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response) => {
-  logger.error(err.stack);
-  logger.error({ error: err }, 'Unhandled error');
+  console.error(err.stack);
+  console.error({ error: err }, 'Unhandled error');
   res.status(500).json({
     error: process.env.NODE_ENV === 'production' ? 'Internal Server Error' : err.message,
   });

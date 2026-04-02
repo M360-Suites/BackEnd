@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadMedia = void 0;
-const logger_1 = require("../../logger/logger");
 const responseService_1 = require("../../Services/responseService");
 const Media_1 = __importDefault(require("../../Models/Media"));
 const sharp_1 = __importDefault(require("sharp"));
@@ -26,9 +25,9 @@ exports.uploadMedia = (0, utils_1.asyncHandler)(async (req, res) => {
             caption: validationSchema_1.default.text,
         }).validate({ altText, caption });
         if (error)
-            return (0, responseService_1.resSender)(res, 400, "fail", error.details[0].message);
+            return (0, responseService_1.resSender)(res, 400, 'fail', error.details[0].message);
         if (!req.files) {
-            return (0, responseService_1.resSender)(res, 400, "error", "No file uploaded");
+            return (0, responseService_1.resSender)(res, 400, 'error', 'No file uploaded');
         }
         let files = Object.values(req.files).flat();
         let medias = [];
@@ -41,33 +40,33 @@ exports.uploadMedia = (0, utils_1.asyncHandler)(async (req, res) => {
                     let uploadResult;
                     try {
                         uploadResult = await (0, mediaService_1.uploadFile)(file.path, {
-                            folder: "uploads",
-                            resource_type: "auto", // Automatically detect file type
+                            folder: 'uploads',
+                            resource_type: 'auto', // Automatically detect file type
                         });
                     }
                     catch (err) {
-                        logger_1.logger.error(`Error uploading file to Cloudinary: ${err}`);
-                        return (0, responseService_1.resSender)(res, 500, "error", "Failed to upload file to Cloudinary");
+                        console.error(`Error uploading file to Cloudinary: ${err}`);
+                        return (0, responseService_1.resSender)(res, 500, 'error', 'Failed to upload file to Cloudinary');
                     }
                     // Generate thumbnail for images
                     let thumbnailUrl = undefined;
-                    if (file.mimetype.startsWith("image/")) {
+                    if (file.mimetype.startsWith('image/')) {
                         const thumbnailOptions = {
-                            folder: "uploads/thumbnails",
-                            transformation: [{ width: 300, height: 300, crop: "fit" }],
+                            folder: 'uploads/thumbnails',
+                            transformation: [{ width: 300, height: 300, crop: 'fit' }],
                         };
                         try {
                             const thumbnailResult = await (0, mediaService_1.uploadFile)(file.path, thumbnailOptions);
                             thumbnailUrl = thumbnailResult.secure_url;
                         }
                         catch (err) {
-                            logger_1.logger.error(`Error generating thumbnail: ${err}`);
-                            return (0, responseService_1.resSender)(res, 500, "error", "Failed to generate thumbnail");
+                            console.error(`Error generating thumbnail: ${err}`);
+                            return (0, responseService_1.resSender)(res, 500, 'error', 'Failed to generate thumbnail');
                         }
                     }
                     // Get image dimensions if it's an image
                     let dimensions = {};
-                    if (file.mimetype.startsWith("image/")) {
+                    if (file.mimetype.startsWith('image/')) {
                         const image = (0, sharp_1.default)(file.path);
                         const metadata = await image.metadata();
                         dimensions = {
@@ -102,7 +101,7 @@ exports.uploadMedia = (0, utils_1.asyncHandler)(async (req, res) => {
                 catch (err) {
                     completeRetries++;
                     retries--;
-                    logger_1.logger.error(`Error processing file: ${err}`);
+                    console.error(`Error processing file: ${err}`);
                     if (retries === 0) {
                         throw new Error(`Failed to upload file after ${completeRetries} attempts`);
                     }
@@ -111,10 +110,10 @@ exports.uploadMedia = (0, utils_1.asyncHandler)(async (req, res) => {
                 }
             }
         }
-        return (0, responseService_1.resSender)(res, 201, "success", "Media uploaded successfully", null, medias);
+        return (0, responseService_1.resSender)(res, 201, 'success', 'Media uploaded successfully', null, medias);
     }
     catch (error) {
-        logger_1.logger.error(`Error uploading media: ${error}`);
-        return (0, responseService_1.resSender)(res, 500, "error", error.message || "Failed to upload media");
+        console.error(`Error uploading media: ${error}`);
+        return (0, responseService_1.resSender)(res, 500, 'error', error.message || 'Failed to upload media');
     }
 });

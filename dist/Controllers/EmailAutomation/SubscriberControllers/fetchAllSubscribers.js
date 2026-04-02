@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchAllSubscribers = void 0;
-const logger_1 = require("../../../logger/logger");
 const responseService_1 = require("../../../Services/responseService");
 const joi_1 = __importDefault(require("joi"));
 const Campaign_1 = require("../../../Models/Campaign");
@@ -19,7 +18,7 @@ exports.fetchAllSubscribers = (0, utils_1.asyncHandler)(async (req, res) => {
             limit: joi_1.default.number().integer().min(1).default(10),
         }).validate(req.query);
         if (error)
-            return (0, responseService_1.resSender)(res, 400, "fail", error.details[0].message);
+            return (0, responseService_1.resSender)(res, 400, 'fail', error.details[0].message);
         const query = { subscribee: orgId };
         const subscribers = await Campaign_1.Subscriber.find(query)
             .skip((Number(page) - 1) * Number(limit))
@@ -34,10 +33,10 @@ exports.fetchAllSubscribers = (0, utils_1.asyncHandler)(async (req, res) => {
             currentPage: Number(page),
             limit: Number(limit),
         };
-        return (0, responseService_1.resSender)(res, 200, "success", "Subscribers fetched successfully", null, response);
+        return (0, responseService_1.resSender)(res, 200, 'success', 'Subscribers fetched successfully', null, response);
     }
     catch (error) {
-        logger_1.logger.error("Error fetching subscribers:", error);
-        return (0, responseService_1.resSender)(res, 500, "error", error.message || "Error fetching subscribers");
+        console.error('Error fetching subscribers:', error);
+        return (0, responseService_1.resSender)(res, 500, 'error', error.message || 'Error fetching subscribers');
     }
 });

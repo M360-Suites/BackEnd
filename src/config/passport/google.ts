@@ -1,28 +1,22 @@
-import passport from "passport";
-import {
-  Strategy as GoogleStrategy,
-  Profile,
-  VerifyCallback,
-} from "passport-google-oauth20";
-import { User } from "../../Models/User";
-import { config } from "dotenv";
-import { logger } from "../../logger/logger";
-import { Request } from "express";
+import passport from 'passport';
+import { Strategy as GoogleStrategy, Profile, VerifyCallback } from 'passport-google-oauth20';
+import { User } from '../../Models/User';
+import { config } from 'dotenv';
+import { logger } from '../../logger/logger';
+import { Request } from 'express';
 config();
 
 let serverUrl =
-  process.env.NODE_ENV === "development"
-    ? process.env.SERVER_URL
-    : process.env.PROD_URL;
+  process.env.NODE_ENV === 'development' ? process.env.SERVER_URL : process.env.PROD_URL;
 
 passport.use(
-  "google-signin",
+  'google-signin',
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       callbackURL: `${serverUrl}/api/auth/google/callback`,
-      scope: ["profile", "email"],
+      scope: ['profile', 'email'],
       passReqToCallback: true,
     },
     async (
@@ -31,7 +25,7 @@ passport.use(
       refreshToken: string,
       params: any,
       profile: Profile,
-      done: VerifyCallback
+      done: VerifyCallback,
     ) => {
       try {
         // Check if a user with the Google Id exists
@@ -50,9 +44,9 @@ passport.use(
               await user.save();
             } else {
               // Create a new user with Google data
-              const name = profile._json?.given_name || "Unknown";
-              const lastName = profile._json?.family_name || "None";
-              const avatar = profile.photos?.[0]?.value || "";
+              const name = profile._json?.given_name || 'Unknown';
+              const lastName = profile._json?.family_name || 'None';
+              const avatar = profile.photos?.[0]?.value || '';
 
               // Generate a random password for Google users
               const randomPassword = Math.random().toString(36).slice(-8);
@@ -73,7 +67,7 @@ passport.use(
         }
 
         if (!user) {
-          return done(new Error("Could not create user"), undefined);
+          return done(new Error('Could not create user'), undefined);
         }
 
         // Pass user data to the next middleware
@@ -86,15 +80,15 @@ passport.use(
 
         return done(null, { user: userData });
       } catch (error) {
-        logger.error("Error in Google Strategy:", error);
+        console.error('Error in Google Strategy:', error);
         done(error as Error, undefined);
       }
-    }
-  )
+    },
+  ),
 );
 
 passport.use(
-  "google-mail",
+  'google-mail',
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
@@ -107,12 +101,12 @@ passport.use(
       accessToken: string,
       refreshToken: string,
       profile: Profile,
-      done: VerifyCallback
+      done: VerifyCallback,
     ) => {
       try {
         const email = profile.emails?.[0]?.value;
         if (!email || !accessToken || !refreshToken) {
-          return done(new Error("Missing credentials"), false);
+          return done(new Error('Missing credentials'), false);
         }
 
         // console.log("Google Profile: ", profile);
@@ -124,18 +118,18 @@ passport.use(
           profile,
         });
       } catch (error) {
-        logger.error("Error in Google Mail Strategy:", error);
+        console.error('Error in Google Mail Strategy:', error);
         done(error as Error, false);
       }
-    }
-  )
+    },
+  ),
 );
 
 // Attach authorizationParams manually
 (GoogleStrategy.prototype as any).authorizationParams = function () {
   return {
-    access_type: "offline",
-    prompt: "consent",
+    access_type: 'offline',
+    prompt: 'consent',
   };
 };
 

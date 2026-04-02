@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.isOauthTokenExpired = exports.getCookies = exports.saveCookies = exports.verifyToken = exports.generateToken = void 0;
-const logger_1 = require("../logger/logger");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 /**
  *
@@ -20,8 +19,8 @@ const generateToken = (payload, secret, options) => {
         return token;
     }
     catch (error) {
-        logger_1.logger.error(`Error creating token: ${error}`);
-        throw new Error("Error creating token");
+        console.error(`Error creating token: ${error}`);
+        throw new Error('Error creating token');
     }
 };
 exports.generateToken = generateToken;
@@ -38,9 +37,9 @@ const verifyToken = (token, secret) => {
         return decoded;
     }
     catch (error) {
-        logger_1.logger.error(`Error validating token: ${error}`);
+        console.error(`Error validating token: ${error}`);
         throw error;
-        throw new Error("Error validating token: " + error.message);
+        throw new Error('Error validating token: ' + error.message);
     }
 };
 exports.verifyToken = verifyToken;
@@ -54,8 +53,8 @@ exports.verifyToken = verifyToken;
 const saveCookies = async (res, name, value, maxAge = 3600000) => {
     res.cookie(name, value, {
         httpOnly: true,
-        secure: process.env.ENV === "production",
-        sameSite: "strict",
+        secure: process.env.ENV === 'production',
+        sameSite: 'strict',
         maxAge,
     });
 };
@@ -73,8 +72,8 @@ const getCookies = (req, cookieName) => {
         return null; // No cookies found
     }
     let cookies;
-    cookieHeader.split(";").forEach((cookie) => {
-        const [name, value] = cookie.trim().split("=");
+    cookieHeader.split(';').forEach((cookie) => {
+        const [name, value] = cookie.trim().split('=');
         cookies[name] = decodeURIComponent(value);
     });
     return cookies[cookieName] || null; // Return specific cookie or null if not found

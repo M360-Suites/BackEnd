@@ -1,8 +1,8 @@
-import nodemailer from "nodemailer";
-import fs from "fs";
-import { promisify } from "util";
-import path from "path";
-import { logger } from "../logger/logger";
+import nodemailer from 'nodemailer';
+import fs from 'fs';
+import { promisify } from 'util';
+import path from 'path';
+import { logger } from '../logger/logger';
 import { google } from 'googleapis';
 import { AuthProvider, Client } from '@microsoft/microsoft-graph-client';
 import axios from 'axios';
@@ -52,14 +52,13 @@ export const sendMail = async (
   mailRecipient: string,
   subject: string,
   mailContent: any,
-  mailSender: any
+  mailSender: any,
 ) => {
   const icon = await readFileAsync(
-    path.join(__dirname, "..", "public", "assets", "images", "logo.png")
+    path.join(__dirname, '..', 'public', 'assets', 'images', 'logo.png'),
   );
   // Choose the correct transporter based on the sender
-  const transporter =
-    mailSender === noReplyEmail ? noReplyEmailTransporter : normalTranspoter;
+  const transporter = mailSender === noReplyEmail ? noReplyEmailTransporter : normalTranspoter;
 
   // Setup email data
   let mailOptions = {
@@ -69,10 +68,10 @@ export const sendMail = async (
     html: mailContent,
     attachments: [
       {
-        filename: "icon.png",
+        filename: 'icon.png',
         content: icon,
-        encoding: "base64",
-        cid: "icon@m360suites.com",
+        encoding: 'base64',
+        cid: 'icon@m360suites.com',
       },
     ],
   };
@@ -81,11 +80,11 @@ export const sendMail = async (
   return new Promise((resolve, reject) => {
     transporter.sendMail(mailOptions, (error: any, info) => {
       if (error) {
-        logger.error("Error occurred:", error.message);
+        console.error('Error occurred:', error.message);
         reject(error); // Reject the promise if there is an error
       } else {
-        logger.info("Email sent successfully!");
-        console.log("Message ID:", info.messageId);
+        logger.info('Email sent successfully!');
+        console.log('Message ID:', info.messageId);
         logger.info(info.response);
         resolve(info); // Resolve the promise if the email is sent
       }
@@ -93,10 +92,8 @@ export const sendMail = async (
   });
 };
 
-
-
 interface TokenRecord {
-  provider: string | "google" | "microsoft" | "zoho" | "custom";
+  provider: string | 'google' | 'microsoft' | 'zoho' | 'custom';
   email: string;
   accessToken?: string;
   refreshToken?: string;
@@ -114,63 +111,47 @@ interface TokenRecord {
  * @param text Content of the mail..
  * @returns Result of mail sending operation
  */
-export async function sendEmail(
-  token: TokenRecord,
-  to: string,
-  subject: string,
-  text: string
-) {
+export async function sendEmail(token: TokenRecord, to: string, subject: string, text: string) {
   // Decrypt sensitive fields before use
   if (token.accessToken) token.accessToken = decrypt(token.accessToken);
   if (token.refreshToken) token.refreshToken = decrypt(token.refreshToken);
   if (token.smtpPassword) token.smtpPassword = decrypt(token.smtpPassword);
 
   switch (token.provider) {
-    case "google":
+    case 'google':
       return sendViaGmail(token, to, subject, text);
-    case "microsoft":
+    case 'microsoft':
       return sendViaMicrosoft(token, to, subject, text);
-    case "zoho":
+    case 'zoho':
       return sendViaZoho(token, to, subject, text);
-    case "custom":
+    case 'custom':
       return sendViaSmtp(token, to, subject, text);
   }
 }
 
-async function sendViaGmail(
-  token: TokenRecord,
-  to: string,
-  subject: string,
-  text: string
-) {
+async function sendViaGmail(token: TokenRecord, to: string, subject: string, text: string) {
   let serverUrl =
-    process.env.NODE_ENV === "development"
-      ? process.env.SERVER_URL
-      : process.env.PROD_URL;
+    process.env.NODE_ENV === 'development' ? process.env.SERVER_URL : process.env.PROD_URL;
 
-  console.log("Sending from: ", token.email);
+  console.log('Sending from: ', token.email);
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   const redirectUri = `${serverUrl}/api/campaigns/google/callback`;
 
-  console.log("Creds: ", { clientId, clientSecret });
+  console.log('Creds: ', { clientId, clientSecret });
 
-  const oAuth2Client = new google.auth.OAuth2(
-    clientId,
-    clientSecret,
-    redirectUri
-  );
+  const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
 
   oAuth2Client.setCredentials({ refresh_token: token.refreshToken });
   const accessToken = await oAuth2Client.getAccessToken();
 
-  console.log("OAuth2 cred: ", oAuth2Client.credentials);
+  console.log('OAuth2 cred: ', oAuth2Client.credentials);
 
   const transporter = nodemailer.createTransport({
-    service: "gmail",
+    service: 'gmail',
     auth: {
-      type: "OAuth2",
+      type: 'OAuth2',
       user: token.email,
       clientId,
       clientSecret,
@@ -180,52 +161,39 @@ async function sendViaGmail(
   });
 
   return new Promise((resolve, reject) => {
-    transporter.sendMail(
-      { from: token.email, to, subject, text },
-      (error: any, info) => {
-        if (error) {
-          console.error("Error sending Campaign,", error);
-          reject(error);
-        } else {
-          logger.info("Campaign Sent");
-          console.log("Res: ", info.response);
-          resolve(info);
-        }
+    transporter.sendMail({ from: token.email, to, subject, text }, (error: any, info) => {
+      if (error) {
+        console.error('Error sending Campaign,', error);
+        reject(error);
+      } else {
+        logger.info('Campaign Sent');
+        console.log('Res: ', info.response);
+        resolve(info);
       }
-    );
+    });
   });
 }
 
-async function sendViaMicrosoft(
-  token: TokenRecord,
-  to: string,
-  subject: string,
-  text: string
-) {
+async function sendViaMicrosoft(token: TokenRecord, to: string, subject: string, text: string) {
   const authProvider: AuthProvider = (done) => {
     done(null, token.accessToken!);
   };
 
   const client = Client.init({ authProvider });
 
-  return client.api("/me/sendMail").post({
+  return client.api('/me/sendMail').post({
     message: {
       subject,
-      body: { contentType: "Text", content: text },
+      body: { contentType: 'Text', content: text },
       toRecipients: [{ emailAddress: { address: to } }],
     },
     saveToSentItems: true,
   });
 }
 
-async function sendViaZoho(
-  token: TokenRecord,
-  to: string,
-  subject: string,
-  text: string
-) {
+async function sendViaZoho(token: TokenRecord, to: string, subject: string, text: string) {
   return axios.post(
-    "https://mail.zoho.com/api/accounts/{accountId}/messages",
+    'https://mail.zoho.com/api/accounts/{accountId}/messages',
     {
       fromAddress: token.email,
       toAddress: to,
@@ -236,16 +204,11 @@ async function sendViaZoho(
       headers: {
         Authorization: `Zoho-oauthtoken ${token.accessToken}`,
       },
-    }
+    },
   );
 }
 
-async function sendViaSmtp(
-  token: TokenRecord,
-  to: string,
-  subject: string,
-  text: string
-) {
+async function sendViaSmtp(token: TokenRecord, to: string, subject: string, text: string) {
   const transporter = nodemailer.createTransport({
     host: token.smtpHost,
     port: token.smtpPort || 465,
@@ -257,18 +220,15 @@ async function sendViaSmtp(
   });
 
   return new Promise((resolve, reject) => {
-    transporter.sendMail(
-      { from: token.email, to, subject, text },
-      (error: any, info) => {
-        if (error) {
-          console.error("Error sending Campaign,", error);
-          reject(error);
-        } else {
-          logger.info("Campaign Sent");
-          console.log("Res: ", info.response);
-          resolve(info);
-        }
+    transporter.sendMail({ from: token.email, to, subject, text }, (error: any, info) => {
+      if (error) {
+        console.error('Error sending Campaign,', error);
+        reject(error);
+      } else {
+        logger.info('Campaign Sent');
+        console.log('Res: ', info.response);
+        resolve(info);
       }
-    );
+    });
   });
 }

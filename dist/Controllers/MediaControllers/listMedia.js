@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.listMedia = void 0;
-const logger_1 = require("../../logger/logger");
 const responseService_1 = require("../../Services/responseService");
 const Media_1 = __importDefault(require("../../Models/Media"));
 const joi_1 = __importDefault(require("joi"));
@@ -20,18 +19,16 @@ exports.listMedia = (0, utils_1.asyncHandler)(async (req, res) => {
         const { error } = joi_1.default.object({
             page: joi_1.default.number().integer().min(1).default(1),
             limit: joi_1.default.number().integer().min(1).default(20),
-            mimeType: joi_1.default.string()
-                .valid("image", "video", "audio", "document")
-                .optional(),
+            mimeType: joi_1.default.string().valid('image', 'video', 'audio', 'document').optional(),
         }).validate(req.query);
         if (error)
-            return (0, responseService_1.resSender)(res, 400, "fail", error.details[0].message);
+            return (0, responseService_1.resSender)(res, 400, 'fail', error.details[0].message);
         const query = { org: orgId };
         if (mimeType) {
-            if (mimeType === "image") {
+            if (mimeType === 'image') {
                 query.mimeType = { $regex: /^image\// };
             }
-            else if (mimeType === "video") {
+            else if (mimeType === 'video') {
                 query.mimeType = { $regex: /^video\// };
             }
             else {
@@ -43,7 +40,7 @@ exports.listMedia = (0, utils_1.asyncHandler)(async (req, res) => {
             .skip((Number(page) - 1) * Number(limit))
             .limit(Number(limit));
         const total = await Media_1.default.countDocuments(query);
-        return (0, responseService_1.resSender)(res, 200, "success", "Media list retrieved", null, {
+        return (0, responseService_1.resSender)(res, 200, 'success', 'Media list retrieved', null, {
             media,
             pagination: {
                 page: Number(page),
@@ -54,7 +51,7 @@ exports.listMedia = (0, utils_1.asyncHandler)(async (req, res) => {
         });
     }
     catch (error) {
-        logger_1.logger.error(`Error listing media: ${error}`);
-        return (0, responseService_1.resSender)(res, 500, "error", error.message || "Failed to list media");
+        console.error(`Error listing media: ${error}`);
+        return (0, responseService_1.resSender)(res, 500, 'error', error.message || 'Failed to list media');
     }
 });

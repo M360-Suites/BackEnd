@@ -1,17 +1,16 @@
-import mongoose from "mongoose";
-import { logger } from "../logger/logger";
+import mongoose from 'mongoose';
+import { logger } from '../logger/logger';
 
 // Create database connection cache
 let cachedDb: typeof mongoose | null = null;
 
-async function connectToDatabase():Promise<typeof mongoose> {
+async function connectToDatabase(): Promise<typeof mongoose> {
   if (cachedDb) {
     return cachedDb;
   }
 
-  const dbUri = process.env.NODE_ENV === "production" 
-    ? process.env.LIVE_MONGO_URI 
-    : process.env.MONGODB_URI;
+  const dbUri =
+    process.env.NODE_ENV === 'production' ? process.env.LIVE_MONGO_URI : process.env.MONGODB_URI;
 
   if (!dbUri) {
     throw new Error('MongoDB URI is not defined');
@@ -23,7 +22,7 @@ async function connectToDatabase():Promise<typeof mongoose> {
     logger.info('Connected to MongoDB');
     return db;
   } catch (error) {
-    logger.error('MongoDB connection error:', error);
+    console.error('MongoDB connection error:', error);
     throw error;
   }
 }

@@ -54,6 +54,8 @@ exports.signup = (0, utils_1.asyncHandler)(async (req, res) => {
         // console.log("Decoded payload: ", decoded);
         if (!decoded)
             return (0, responseService_1.resSender)(res, 403, 'fail', 'Validation Token is invalid');
+        if (decoded.email !== email)
+            return (0, responseService_1.resSender)(res, 403, 'fail', 'Email does not match provided token!');
         // Hash User's Password
         let saltOrRound = 10;
         let salt = bcryptjs_1.default.genSaltSync(saltOrRound);
@@ -61,7 +63,7 @@ exports.signup = (0, utils_1.asyncHandler)(async (req, res) => {
         const newUser = new User_1.User({
             name: name,
             url: url,
-            email: decoded.email === email && email,
+            email: email,
             password: hashedPwd,
             emailVerified: decoded.emailVerified,
         });
@@ -80,10 +82,10 @@ exports.signup = (0, utils_1.asyncHandler)(async (req, res) => {
                 acceptedAt: new Date(Date.now()),
             });
         }
-        return (0, responseService_1.resSender)(res, 200, 'success', 'User Created Successfully');
+        return (0, responseService_1.resSender)(res, 200, 'success', `${org ? 'Org' : 'User'} Created Successfully`);
     }
     catch (error) {
-        logger_1.logger.error('Failed to sign up: ', error);
+        console.error('Failed to sign up: ', error);
         return (0, responseService_1.resSender)(res, 500, 'error', error.message || 'Server Error');
     }
 });
@@ -100,14 +102,14 @@ exports.startTrial = (0, utils_1.asyncHandler)(async (req, res) => {
         }).validate(req.body);
         if (error)
             return (0, responseService_1.resSender)(res, 400, 'fail', error.details[0].message);
-        const existingMail = await User_1.User.findOne({ email: email });
+        const existingMail = await User_1.User.findOne({ email: email }) || await User_1.Organization.findOne({ email });
         if (existingMail)
             return (0, responseService_1.resSender)(res, 403, 'fail', 'Email Address is already in use');
         let emailSent = await (0, otpService_1.createAndSendOtp)(email, 'trial');
         return (0, responseService_1.resSender)(res, 200, 'success', 'Verification Code sent successfully');
     }
     catch (error) {
-        logger_1.logger.error('Failed to request for trial: ', error);
+        console.error('Failed to request for trial: ', error);
         return (0, responseService_1.resSender)(res, 500, 'error', error.message || 'Server Error');
     }
 });

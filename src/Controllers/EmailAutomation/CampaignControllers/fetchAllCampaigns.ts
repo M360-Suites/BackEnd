@@ -1,103 +1,86 @@
-import { Request, Response } from "express";
-import { logger } from "../../../logger/logger";
-import { resSender } from "../../../Services/responseService";
-import Joi from "joi";
-import { Campaign, CampaignType } from "../../../Models/Campaign";
-import { asyncHandler } from "../../../helpers/utils";
-import { CustomRequest } from "../../../Types/CustomRequest";
+import { Request, Response } from 'express';
+import { logger } from '../../../logger/logger';
+import { resSender } from '../../../Services/responseService';
+import Joi from 'joi';
+import { Campaign, CampaignType } from '../../../Models/Campaign';
+import { asyncHandler } from '../../../helpers/utils';
+import { CustomRequest } from '../../../Types/CustomRequest';
 
-export const fetchAllCampaigns = asyncHandler(
-  async (req: CustomRequest, res: Response) => {
-    try {
-      const orgId = (req.organizationId)?._id;
-      let query: any = { org: orgId };
-      const { page, limit } = req.query;
-      const { type, timespan, status } = req.body;
+export const fetchAllCampaigns = asyncHandler(async (req: CustomRequest, res: Response) => {
+  try {
+    const orgId = req.organizationId?._id;
+    let query: any = { org: orgId };
+    const { page, limit } = req.query;
+    const { type, timespan, status } = req.body;
 
-      const { error } = Joi.object({
-        page: Joi.number().integer().min(1).default(1),
-        limit: Joi.number().integer().min(1).default(10),
-        type: Joi.string().valid("oneTime", "drip").optional(),
-        timespan: Joi.string()
-          .valid("today", "week", "month", "year")
-          .optional(),
-        status: Joi.string().valid("active", "completed", "failed").optional(),
-      }).validate({ page, limit, type, timespan, status });
-      if (error) return resSender(res, 400, "fail", error.details[0].message);
+    const { error } = Joi.object({
+      page: Joi.number().integer().min(1).default(1),
+      limit: Joi.number().integer().min(1).default(10),
+      type: Joi.string().valid('oneTime', 'drip').optional(),
+      timespan: Joi.string().valid('today', 'week', 'month', 'year').optional(),
+      status: Joi.string().valid('active', 'completed', 'failed').optional(),
+    }).validate({ page, limit, type, timespan, status });
+    if (error) return resSender(res, 400, 'fail', error.details[0].message);
 
-      if (type) {
-        if (type === "oneTime") {
-          query.type = CampaignType.oneTime;
-        } else if (type === "drip") {
-          query.type = CampaignType.drip;
-        }
+    if (type) {
+      if (type === 'oneTime') {
+        query.type = CampaignType.oneTime;
+      } else if (type === 'drip') {
+        query.type = CampaignType.drip;
       }
-      if (status) query.status = status;
-      if (timespan) {
-        const today = new Date();
-        let startDate: Date;
-        switch (timespan) {
-          case "today":
-            startDate = new Date(today.setHours(0, 0, 0, 0));
-            break;
-          case "week":
-            startDate = new Date(today.setDate(today.getDate() - 7));
-            break;
-          case "month":
-            startDate = new Date(today.setMonth(today.getMonth() - 1));
-            break;
-          case "year":
-            startDate = new Date(today.setFullYear(today.getFullYear() - 1));
-            break;
-          default:
-            startDate = new Date();
-        }
-        query.createdAt = { $gte: startDate };
-      }
-
-      const campaigns = await Campaign.find(query)
-        .skip((Number(page) - 1) * Number(limit))
-        .limit(Number(limit))
-        .sort({ createdAt: -1 });
-      const totalCampaigns = await Campaign.countDocuments(query);
-      const totalPages = Math.ceil(totalCampaigns / Number(limit));
-
-      // Calculate the open rate % for each campaign
-      const campaignsWithOpenRate = await Promise.all(
-        campaigns.map(async (campaign) => {
-          const totalSent = campaign.totalSent || 0;
-          const totalOpened = campaign.totalOpened || 0;
-          const openRate =
-            totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(2) : 0;
-          return {
-            ...campaign.toObject(),
-            openRate: `${openRate}%`,
-          };
-        })
-      );
-
-      return resSender(
-        res,
-        200,
-        "success",
-        "Campaigns fetched successfully",
-        null,
-        {
-          campaigns: campaignsWithOpenRate,
-          totalCampaigns,
-          totalPages,
-          currentPage: Number(page),
-          limit: Number(limit),
-        }
-      );
-    } catch (error: any) {
-      logger.error("Error fetching campaigns:", error);
-      return resSender(
-        res,
-        500,
-        "error",
-        error.message || "Error fetching campaigns"
-      );
     }
+    if (status) query.status = status;
+    if (timespan) {
+      const today = new Date();
+      let startDate: Date;
+      switch (timespan) {
+        case 'today':
+          startDate = new Date(today.setHours(0, 0, 0, 0));
+          break;
+        case 'week':
+          startDate = new Date(today.setDate(today.getDate() - 7));
+          break;
+        case 'month':
+          startDate = new Date(today.setMonth(today.getMonth() - 1));
+          break;
+        case 'year':
+          startDate = new Date(today.setFullYear(today.getFullYear() - 1));
+          break;
+        default:
+          startDate = new Date();
+      }
+      query.createdAt = { $gte: startDate };
+    }
+
+    const campaigns = await Campaign.find(query)
+      .skip((Number(page) - 1) * Number(limit))
+      .limit(Number(limit))
+      .sort({ createdAt: -1 });
+    const totalCampaigns = await Campaign.countDocuments(query);
+    const totalPages = Math.ceil(totalCampaigns / Number(limit));
+
+    // Calculate the open rate % for each campaign
+    const campaignsWithOpenRate = await Promise.all(
+      campaigns.map(async (campaign) => {
+        const totalSent = campaign.totalSent || 0;
+        const totalOpened = campaign.totalOpened || 0;
+        const openRate = totalSent > 0 ? ((totalOpened / totalSent) * 100).toFixed(2) : 0;
+        return {
+          ...campaign.toObject(),
+          openRate: `${openRate}%`,
+        };
+      }),
+    );
+
+    return resSender(res, 200, 'success', 'Campaigns fetched successfully', null, {
+      campaigns: campaignsWithOpenRate,
+      totalCampaigns,
+      totalPages,
+      currentPage: Number(page),
+      limit: Number(limit),
+    });
+  } catch (error: any) {
+    console.error('Error fetching campaigns:', error);
+    return resSender(res, 500, 'error', error.message || 'Error fetching campaigns');
   }
-);
+});

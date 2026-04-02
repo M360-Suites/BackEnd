@@ -1,9 +1,9 @@
-import { Request, Response } from "express";
-import { logger } from "../logger/logger";
-import jwt, { Secret, PrivateKey, SignOptions, JwtPayload } from "jsonwebtoken";
-import { SocialConnection } from "../Types/types";
+import { Request, Response } from 'express';
+import { logger } from '../logger/logger';
+import jwt, { Secret, PrivateKey, SignOptions, JwtPayload } from 'jsonwebtoken';
+import { SocialConnection } from '../Types/types';
 import { AdsConnection } from '../Types/ads';
-import { CustomRequest } from "../Types/CustomRequest";
+import { CustomRequest } from '../Types/CustomRequest';
 
 export interface JWTPayload {
   userId: string;
@@ -19,17 +19,13 @@ export interface JWTPayload {
  * @param options jwt options
  * @returns token the result of the signature
  */
-export const generateToken = (
-  payload: JWTPayload,
-  secret: string,
-  options?: SignOptions
-) => {
+export const generateToken = (payload: JWTPayload, secret: string, options?: SignOptions) => {
   try {
     const token = jwt.sign(payload, secret as Secret, options);
     return token;
   } catch (error) {
-    logger.error(`Error creating token: ${error}`);
-    throw new Error("Error creating token");
+    console.error(`Error creating token: ${error}`);
+    throw new Error('Error creating token');
   }
 };
 
@@ -39,18 +35,15 @@ export const generateToken = (
  * @param secret Secret key to verify
  * @returns jwt payload / user details
  */
-export const verifyToken = (
-  token: string,
-  secret: Secret
-): string | JwtPayload => {
+export const verifyToken = (token: string, secret: Secret): string | JwtPayload => {
   try {
     const decoded = jwt.verify(token, secret as Secret);
     // console.log('Decoded 1: ', decoded);
     return decoded;
   } catch (error: any) {
-    logger.error(`Error validating token: ${error}`);
+    console.error(`Error validating token: ${error}`);
     throw error;
-    throw new Error("Error validating token: " + error.message);
+    throw new Error('Error validating token: ' + error.message);
   }
 };
 
@@ -61,16 +54,11 @@ export const verifyToken = (
  * @param value
  * @param maxAge
  */
-export const saveCookies = async (
-  res: Response,
-  name: string,
-  value: string,
-  maxAge = 3600000
-) => {
+export const saveCookies = async (res: Response, name: string, value: string, maxAge = 3600000) => {
   res.cookie(name, value, {
     httpOnly: true,
-    secure: process.env.ENV === "production",
-    sameSite: "strict",
+    secure: process.env.ENV === 'production',
+    sameSite: 'strict',
     maxAge,
   });
 };
@@ -88,17 +76,15 @@ export const getCookies = (req: CustomRequest, cookieName: string) => {
     return null; // No cookies found
   }
   let cookies: any;
-  cookieHeader.split(";").forEach((cookie) => {
-    const [name, value] = cookie.trim().split("=");
+  cookieHeader.split(';').forEach((cookie) => {
+    const [name, value] = cookie.trim().split('=');
     cookies[name] = decodeURIComponent(value);
   });
 
   return cookies[cookieName] || null; // Return specific cookie or null if not found
 };
 
-export const isOauthTokenExpired = (
-  connection: SocialConnection | AdsConnection
-): boolean => {
+export const isOauthTokenExpired = (connection: SocialConnection | AdsConnection): boolean => {
   if (!connection.expiresAt) return false;
   return new Date() >= connection.expiresAt;
 };

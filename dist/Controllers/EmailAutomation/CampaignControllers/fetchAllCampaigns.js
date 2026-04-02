@@ -4,33 +4,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.fetchAllCampaigns = void 0;
-const logger_1 = require("../../../logger/logger");
 const responseService_1 = require("../../../Services/responseService");
 const joi_1 = __importDefault(require("joi"));
 const Campaign_1 = require("../../../Models/Campaign");
 const utils_1 = require("../../../helpers/utils");
 exports.fetchAllCampaigns = (0, utils_1.asyncHandler)(async (req, res) => {
     try {
-        const orgId = (req.organizationId)?._id;
+        const orgId = req.organizationId?._id;
         let query = { org: orgId };
         const { page, limit } = req.query;
         const { type, timespan, status } = req.body;
         const { error } = joi_1.default.object({
             page: joi_1.default.number().integer().min(1).default(1),
             limit: joi_1.default.number().integer().min(1).default(10),
-            type: joi_1.default.string().valid("oneTime", "drip").optional(),
-            timespan: joi_1.default.string()
-                .valid("today", "week", "month", "year")
-                .optional(),
-            status: joi_1.default.string().valid("active", "completed", "failed").optional(),
+            type: joi_1.default.string().valid('oneTime', 'drip').optional(),
+            timespan: joi_1.default.string().valid('today', 'week', 'month', 'year').optional(),
+            status: joi_1.default.string().valid('active', 'completed', 'failed').optional(),
         }).validate({ page, limit, type, timespan, status });
         if (error)
-            return (0, responseService_1.resSender)(res, 400, "fail", error.details[0].message);
+            return (0, responseService_1.resSender)(res, 400, 'fail', error.details[0].message);
         if (type) {
-            if (type === "oneTime") {
+            if (type === 'oneTime') {
                 query.type = Campaign_1.CampaignType.oneTime;
             }
-            else if (type === "drip") {
+            else if (type === 'drip') {
                 query.type = Campaign_1.CampaignType.drip;
             }
         }
@@ -40,16 +37,16 @@ exports.fetchAllCampaigns = (0, utils_1.asyncHandler)(async (req, res) => {
             const today = new Date();
             let startDate;
             switch (timespan) {
-                case "today":
+                case 'today':
                     startDate = new Date(today.setHours(0, 0, 0, 0));
                     break;
-                case "week":
+                case 'week':
                     startDate = new Date(today.setDate(today.getDate() - 7));
                     break;
-                case "month":
+                case 'month':
                     startDate = new Date(today.setMonth(today.getMonth() - 1));
                     break;
-                case "year":
+                case 'year':
                     startDate = new Date(today.setFullYear(today.getFullYear() - 1));
                     break;
                 default:
@@ -73,7 +70,7 @@ exports.fetchAllCampaigns = (0, utils_1.asyncHandler)(async (req, res) => {
                 openRate: `${openRate}%`,
             };
         }));
-        return (0, responseService_1.resSender)(res, 200, "success", "Campaigns fetched successfully", null, {
+        return (0, responseService_1.resSender)(res, 200, 'success', 'Campaigns fetched successfully', null, {
             campaigns: campaignsWithOpenRate,
             totalCampaigns,
             totalPages,
@@ -82,7 +79,7 @@ exports.fetchAllCampaigns = (0, utils_1.asyncHandler)(async (req, res) => {
         });
     }
     catch (error) {
-        logger_1.logger.error("Error fetching campaigns:", error);
-        return (0, responseService_1.resSender)(res, 500, "error", error.message || "Error fetching campaigns");
+        console.error('Error fetching campaigns:', error);
+        return (0, responseService_1.resSender)(res, 500, 'error', error.message || 'Error fetching campaigns');
     }
 });

@@ -50,7 +50,7 @@ const noReplyEmailTransporter = nodemailer_1.default.createTransport({
  * @returns Result of mail sending operation
  */
 const sendMail = async (mailRecipient, subject, mailContent, mailSender) => {
-    const icon = await readFileAsync(path_1.default.join(__dirname, "..", "public", "assets", "images", "logo.png"));
+    const icon = await readFileAsync(path_1.default.join(__dirname, '..', 'public', 'assets', 'images', 'logo.png'));
     // Choose the correct transporter based on the sender
     const transporter = mailSender === noReplyEmail ? noReplyEmailTransporter : normalTranspoter;
     // Setup email data
@@ -61,10 +61,10 @@ const sendMail = async (mailRecipient, subject, mailContent, mailSender) => {
         html: mailContent,
         attachments: [
             {
-                filename: "icon.png",
+                filename: 'icon.png',
                 content: icon,
-                encoding: "base64",
-                cid: "icon@m360suites.com",
+                encoding: 'base64',
+                cid: 'icon@m360suites.com',
             },
         ],
     };
@@ -72,12 +72,12 @@ const sendMail = async (mailRecipient, subject, mailContent, mailSender) => {
     return new Promise((resolve, reject) => {
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-                logger_1.logger.error("Error occurred:", error.message);
+                console.error('Error occurred:', error.message);
                 reject(error); // Reject the promise if there is an error
             }
             else {
-                logger_1.logger.info("Email sent successfully!");
-                console.log("Message ID:", info.messageId);
+                logger_1.logger.info('Email sent successfully!');
+                console.log('Message ID:', info.messageId);
                 logger_1.logger.info(info.response);
                 resolve(info); // Resolve the promise if the email is sent
             }
@@ -102,33 +102,31 @@ async function sendEmail(token, to, subject, text) {
     if (token.smtpPassword)
         token.smtpPassword = (0, encryption_1.decrypt)(token.smtpPassword);
     switch (token.provider) {
-        case "google":
+        case 'google':
             return sendViaGmail(token, to, subject, text);
-        case "microsoft":
+        case 'microsoft':
             return sendViaMicrosoft(token, to, subject, text);
-        case "zoho":
+        case 'zoho':
             return sendViaZoho(token, to, subject, text);
-        case "custom":
+        case 'custom':
             return sendViaSmtp(token, to, subject, text);
     }
 }
 async function sendViaGmail(token, to, subject, text) {
-    let serverUrl = process.env.NODE_ENV === "development"
-        ? process.env.SERVER_URL
-        : process.env.PROD_URL;
-    console.log("Sending from: ", token.email);
+    let serverUrl = process.env.NODE_ENV === 'development' ? process.env.SERVER_URL : process.env.PROD_URL;
+    console.log('Sending from: ', token.email);
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = `${serverUrl}/api/campaigns/google/callback`;
-    console.log("Creds: ", { clientId, clientSecret });
+    console.log('Creds: ', { clientId, clientSecret });
     const oAuth2Client = new googleapis_1.google.auth.OAuth2(clientId, clientSecret, redirectUri);
     oAuth2Client.setCredentials({ refresh_token: token.refreshToken });
     const accessToken = await oAuth2Client.getAccessToken();
-    console.log("OAuth2 cred: ", oAuth2Client.credentials);
+    console.log('OAuth2 cred: ', oAuth2Client.credentials);
     const transporter = nodemailer_1.default.createTransport({
-        service: "gmail",
+        service: 'gmail',
         auth: {
-            type: "OAuth2",
+            type: 'OAuth2',
             user: token.email,
             clientId,
             clientSecret,
@@ -139,12 +137,12 @@ async function sendViaGmail(token, to, subject, text) {
     return new Promise((resolve, reject) => {
         transporter.sendMail({ from: token.email, to, subject, text }, (error, info) => {
             if (error) {
-                console.error("Error sending Campaign,", error);
+                console.error('Error sending Campaign,', error);
                 reject(error);
             }
             else {
-                logger_1.logger.info("Campaign Sent");
-                console.log("Res: ", info.response);
+                logger_1.logger.info('Campaign Sent');
+                console.log('Res: ', info.response);
                 resolve(info);
             }
         });
@@ -155,17 +153,17 @@ async function sendViaMicrosoft(token, to, subject, text) {
         done(null, token.accessToken);
     };
     const client = microsoft_graph_client_1.Client.init({ authProvider });
-    return client.api("/me/sendMail").post({
+    return client.api('/me/sendMail').post({
         message: {
             subject,
-            body: { contentType: "Text", content: text },
+            body: { contentType: 'Text', content: text },
             toRecipients: [{ emailAddress: { address: to } }],
         },
         saveToSentItems: true,
     });
 }
 async function sendViaZoho(token, to, subject, text) {
-    return axios_1.default.post("https://mail.zoho.com/api/accounts/{accountId}/messages", {
+    return axios_1.default.post('https://mail.zoho.com/api/accounts/{accountId}/messages', {
         fromAddress: token.email,
         toAddress: to,
         subject,
@@ -189,12 +187,12 @@ async function sendViaSmtp(token, to, subject, text) {
     return new Promise((resolve, reject) => {
         transporter.sendMail({ from: token.email, to, subject, text }, (error, info) => {
             if (error) {
-                console.error("Error sending Campaign,", error);
+                console.error('Error sending Campaign,', error);
                 reject(error);
             }
             else {
-                logger_1.logger.info("Campaign Sent");
-                console.log("Res: ", info.response);
+                logger_1.logger.info('Campaign Sent');
+                console.log('Res: ', info.response);
                 resolve(info);
             }
         });

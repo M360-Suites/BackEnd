@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteMedia = void 0;
-const logger_1 = require("../../logger/logger");
 const responseService_1 = require("../../Services/responseService");
 const mongoose_1 = require("mongoose");
 const Media_1 = __importDefault(require("../../Models/Media"));
@@ -23,13 +22,13 @@ exports.deleteMedia = (0, utils_1.asyncHandler)(async (req, res) => {
             id: validationSchema_1.default.objectId,
         }).validate(req.params);
         if (error)
-            return (0, responseService_1.resSender)(res, 400, "fail", error.details[0].message);
+            return (0, responseService_1.resSender)(res, 400, 'fail', error.details[0].message);
         if (!(0, mongoose_1.isValidObjectId)(id)) {
-            return (0, responseService_1.resSender)(res, 400, "error", "Invalid media ID");
+            return (0, responseService_1.resSender)(res, 400, 'error', 'Invalid media ID');
         }
         const media = await Media_1.default.findById(id);
         if (!media) {
-            return (0, responseService_1.resSender)(res, 404, "error", "Media not found");
+            return (0, responseService_1.resSender)(res, 404, 'error', 'Media not found');
         }
         // Delete the file from storage
         try {
@@ -37,20 +36,20 @@ exports.deleteMedia = (0, utils_1.asyncHandler)(async (req, res) => {
                 fs_1.default.unlinkSync(media.path);
             }
             if (media.thumbnailUrl) {
-                const thumbnailPath = path_1.default.join(__dirname, "../../../public", media.thumbnailUrl);
+                const thumbnailPath = path_1.default.join(__dirname, '../../../public', media.thumbnailUrl);
                 if (fs_1.default.existsSync(thumbnailPath)) {
                     fs_1.default.unlinkSync(thumbnailPath);
                 }
             }
         }
         catch (fileError) {
-            logger_1.logger.error(`Error deleting media file: ${fileError}`);
+            console.error(`Error deleting media file: ${fileError}`);
         }
         await Media_1.default.findByIdAndDelete(id);
-        return (0, responseService_1.resSender)(res, 200, "success", "Media deleted successfully");
+        return (0, responseService_1.resSender)(res, 200, 'success', 'Media deleted successfully');
     }
     catch (error) {
-        logger_1.logger.error(`Error deleting media: ${error}`);
-        return (0, responseService_1.resSender)(res, 500, "error", error.message || "Failed to delete media");
+        console.error(`Error deleting media: ${error}`);
+        return (0, responseService_1.resSender)(res, 500, 'error', error.message || 'Failed to delete media');
     }
 });

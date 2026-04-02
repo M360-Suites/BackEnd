@@ -11,9 +11,7 @@ async function connectToDatabase() {
     if (cachedDb) {
         return cachedDb;
     }
-    const dbUri = process.env.NODE_ENV === "production"
-        ? process.env.LIVE_MONGO_URI
-        : process.env.MONGODB_URI;
+    const dbUri = process.env.NODE_ENV === 'production' ? process.env.LIVE_MONGO_URI : process.env.MONGODB_URI;
     if (!dbUri) {
         throw new Error('MongoDB URI is not defined');
     }
@@ -24,7 +22,7 @@ async function connectToDatabase() {
         return db;
     }
     catch (error) {
-        logger_1.logger.error('MongoDB connection error:', error);
+        console.error('MongoDB connection error:', error);
         throw error;
     }
 }

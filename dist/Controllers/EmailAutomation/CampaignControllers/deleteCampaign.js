@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteCampaigns = void 0;
-const logger_1 = require("../../../logger/logger");
 const responseService_1 = require("../../../Services/responseService");
 const joi_1 = __importDefault(require("joi"));
 const validationSchema_1 = __importDefault(require("../../../Services/validationSchema"));
@@ -16,21 +15,21 @@ exports.deleteCampaigns = (0, utils_1.asyncHandler)(async (req, res) => {
             ids: joi_1.default.array().items(validationSchema_1.default.objectId).required(),
         }).validate(req.body);
         if (error)
-            return (0, responseService_1.resSender)(res, 400, "fail", error.details[0].message);
+            return (0, responseService_1.resSender)(res, 400, 'fail', error.details[0].message);
         const { ids } = req.body;
         const orgId = req.organizationId?._id;
         if (!ids || ids.length < 1)
-            return (0, responseService_1.resSender)(res, 400, "fail", "Campaign IDs are required");
+            return (0, responseService_1.resSender)(res, 400, 'fail', 'Campaign IDs are required');
         const deletedCampaigns = await Campaign_1.Campaign.deleteMany({
             org: orgId,
             _id: { $in: ids },
         });
         if (deletedCampaigns.deletedCount === 0)
-            return (0, responseService_1.resSender)(res, 404, "fail", "No campaigns found to delete");
-        return (0, responseService_1.resSender)(res, 200, "success", "Campaigns deleted successfully");
+            return (0, responseService_1.resSender)(res, 404, 'fail', 'No campaigns found to delete');
+        return (0, responseService_1.resSender)(res, 200, 'success', 'Campaigns deleted successfully');
     }
     catch (error) {
-        logger_1.logger.error("Error deleting campaign:", error);
-        return (0, responseService_1.resSender)(res, 500, "error", error.message || "Error deleting campaigns");
+        console.error('Error deleting campaign:', error);
+        return (0, responseService_1.resSender)(res, 500, 'error', error.message || 'Error deleting campaigns');
     }
 });

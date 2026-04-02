@@ -56,6 +56,8 @@ export const signup = asyncHandler(async (req: CustomRequest, res: Response) => 
     const decoded: any = await verifyToken(token, jwtAccess);
     // console.log("Decoded payload: ", decoded);
     if (!decoded) return resSender(res, 403, 'fail', 'Validation Token is invalid');
+    if (decoded.email !== email)
+      return resSender(res, 403, 'fail', 'Email does not match provided token!');
 
     // Hash User's Password
     let saltOrRound = 10;
@@ -65,7 +67,7 @@ export const signup = asyncHandler(async (req: CustomRequest, res: Response) => 
     const newUser = new User({
       name: name,
       url: url,
-      email: decoded.email === email && email,
+      email: email,
       password: hashedPwd,
       emailVerified: decoded.emailVerified,
     });
@@ -91,9 +93,9 @@ export const signup = asyncHandler(async (req: CustomRequest, res: Response) => 
       });
     }
 
-    return resSender(res, 200, 'success', 'User Created Successfully');
+    return resSender(res, 200, 'success', `${org ? 'Org' : 'User'} Created Successfully`);
   } catch (error: any) {
-    logger.error('Failed to sign up: ', error);
+    console.error('Failed to sign up: ', error);
     return resSender(res, 500, 'error', error.message || 'Server Error');
   }
 });
@@ -111,14 +113,14 @@ export const startTrial = asyncHandler(async (req: CustomRequest, res: Response)
     }).validate(req.body);
     if (error) return resSender(res, 400, 'fail', error.details[0].message);
 
-    const existingMail = await User.findOne({ email: email });
+    const existingMail = await User.findOne({ email: email }) || await Organization.findOne({ email });
     if (existingMail) return resSender(res, 403, 'fail', 'Email Address is already in use');
 
     let emailSent = await createAndSendOtp(email, 'trial');
 
     return resSender(res, 200, 'success', 'Verification Code sent successfully');
   } catch (error: any) {
-    logger.error('Failed to request for trial: ', error);
+    console.error('Failed to request for trial: ', error);
     return resSender(res, 500, 'error', error.message || 'Server Error');
   }
 });

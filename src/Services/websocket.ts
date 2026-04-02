@@ -1,9 +1,9 @@
-import { Server } from "socket.io";
-import { ObjectId } from "mongoose";
-import { User } from "../Models/User";
-import corsOptions from "../config/cors";
-import { verifyToken } from "./tokenService";
-import { logger } from "../logger/logger";
+import { Server } from 'socket.io';
+import { ObjectId } from 'mongoose';
+import { User } from '../Models/User';
+import corsOptions from '../config/cors';
+import { verifyToken } from './tokenService';
+import { logger } from '../logger/logger';
 
 let io: any;
 const connectedUsers = new Map();
@@ -27,7 +27,7 @@ const useSocket = (server: any) => {
 
     // If no token is provided, reject the connection with an error
     if (!token) {
-      return next(new Error("Authentication error: Token is missing"));
+      return next(new Error('Authentication error: Token is missing'));
     }
 
     try {
@@ -37,15 +37,15 @@ const useSocket = (server: any) => {
 
       // If no user is found, reject the connection
       if (!user) {
-        return next(new Error("Authentication error: User not found"));
+        return next(new Error('Authentication error: User not found'));
       }
 
       // Attach the user ID to the socket object for future reference
       socket.userId = user.id.toString(); // Ensure the user ID is a string
       next(); // Proceed with the connection if authentication is successful
     } catch (error) {
-      logger.error("JWT verification error:", error); // Log any JWT verification errors
-      return next(new Error("Authentication error: Invalid token")); // Reject the connection on token verification failure
+      console.error('JWT verification error:', error); // Log any JWT verification errors
+      return next(new Error('Authentication error: Invalid token')); // Reject the connection on token verification failure
     }
   });
 
@@ -58,7 +58,7 @@ const useSocket = (server: any) => {
   io.emitToSpecificUser = (id: ObjectId, event: string, arg: any) => {
     const userIdStr = id.toString(); // Normalize user ID to string for consistency
     const userSockets = connectedUsers.get(userIdStr); // Retrieve the list of connected sockets for the user
-    logger.info("emited to ", id);
+    logger.info('emited to ', id);
     // If the user has active sockets, emit the event to each socket
     if (userSockets && userSockets.length) {
       userSockets.forEach((socketId: any) => {
@@ -73,7 +73,7 @@ const useSocket = (server: any) => {
    * @param {Function} handler - The function to handle the event when it occurs.
    */
   io.registerEvent = (eventName: string, handler: any) => {
-    io.on("connection", (socket: any) => {
+    io.on('connection', (socket: any) => {
       // Register the event listener for the specified event
       socket.on(eventName, async (data: any) => {
         try {
@@ -107,8 +107,8 @@ const useSocket = (server: any) => {
           // Invoke the handler function, passing the simulated req and res objects
           await handler(req, res);
         } catch (error) {
-          logger.error(`Error in event ${eventName}:`, error); // Log the error for debugging
-          socket.emit("error", { message: "An error occurred" }); // Emit a generic error message back to the client
+          console.error(`Error in event ${eventName}:`, error); // Log the error for debugging
+          socket.emit('error', { message: 'An error occurred' }); // Emit a generic error message back to the client
         }
       });
     });
@@ -118,7 +118,7 @@ const useSocket = (server: any) => {
    * Handle socket connection and maintain user socket state.
    * @param {Object} socket - The socket instance for the connection.
    */
-  io.on("connection", (socket: any) => {
+  io.on('connection', (socket: any) => {
     const userId = socket.userId.toString(); // Convert user ID to string for consistency
 
     // Add the socket ID to the user's list of active sockets
@@ -129,16 +129,14 @@ const useSocket = (server: any) => {
     }
 
     // Emit a welcome message to the user who just connected
-    socket.emit("welcome", {
+    socket.emit('welcome', {
       message: `Welcome ${userId}! You are successfully connected.`,
     });
 
     // Handle socket disconnection
-    socket.on("disconnect", () => {
+    socket.on('disconnect', () => {
       if (connectedUsers.has(userId)) {
-        const userSockets = connectedUsers
-          .get(userId)
-          .filter((id: string) => id !== socket.id); // Remove the current socket ID from the user's active sockets
+        const userSockets = connectedUsers.get(userId).filter((id: string) => id !== socket.id); // Remove the current socket ID from the user's active sockets
         if (userSockets.length > 0) {
           connectedUsers.set(userId, userSockets); // Update the user's socket list
         } else {
@@ -160,7 +158,7 @@ const useSocket = (server: any) => {
  */
 const getIoInstance = () => {
   if (!io) {
-    throw new Error("Socket.io not initialized");
+    throw new Error('Socket.io not initialized');
   }
   return io; // Return the io instance if initialized
 };

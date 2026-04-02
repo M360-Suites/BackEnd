@@ -23,21 +23,21 @@ exports.sendCode = (0, utils_1.asyncHandler)(async (req, res) => {
         const { email, reason } = req.body;
         const { error } = joi_1.default.object({
             email: validationSchema_1.default.email,
-            reason: validationSchema_1.default.reason.disallow("trial"),
+            reason: validationSchema_1.default.reason.disallow('trial'),
         }).validate(req.body);
         if (error)
-            return (0, responseService_1.resSender)(res, 400, "fail", error.details[0].message);
+            return (0, responseService_1.resSender)(res, 400, 'fail', error.details[0].message);
         const existingMail = await User_1.User.findOne({ email: email });
         if (!existingMail) {
-            logger_1.logger.info("User Email does not exist");
-            return (0, responseService_1.resSender)(res, 200, "success", "Verification Code will be sent to your mail, if it exists!");
+            logger_1.logger.info('User Email does not exist');
+            return (0, responseService_1.resSender)(res, 200, 'success', 'Verification Code will be sent to your mail, if it exists!');
         }
         const emailSent = await (0, otpService_1.createAndSendOtp)(existingMail.email, reason);
-        return (0, responseService_1.resSender)(res, 200, "success", "Verification Code will be sent to your mail, if it exists!");
+        return (0, responseService_1.resSender)(res, 200, 'success', 'Verification Code will be sent to your mail, if it exists!');
     }
     catch (error) {
-        logger_1.logger.error("Failed to request for trial: ", error);
-        return (0, responseService_1.resSender)(res, 500, "error", error.message || "Server Error");
+        console.error('Failed to request for trial: ', error);
+        return (0, responseService_1.resSender)(res, 500, 'error', error.message || 'Server Error');
     }
 });
 /**
@@ -54,13 +54,13 @@ exports.verifyCode = (0, utils_1.asyncHandler)(async (req, res) => {
             reason: validationSchema_1.default.reason,
         }).validate(req.body);
         if (error)
-            return (0, responseService_1.resSender)(res, 400, "fail", error.details[0].message);
+            return (0, responseService_1.resSender)(res, 400, 'fail', error.details[0].message);
         const token = await (0, otpService_1.verifyOtp)(code, email, reason);
-        return (0, responseService_1.resSender)(res, 200, "success", "Code verified successfully!", null, token);
+        return (0, responseService_1.resSender)(res, 200, 'success', 'Code verified successfully!', null, token);
     }
     catch (error) {
-        logger_1.logger.error("Failed to verify code: ", error);
-        return (0, responseService_1.resSender)(res, 500, "error", error.message || "Server Error");
+        console.error('Failed to verify code: ', error);
+        return (0, responseService_1.resSender)(res, 500, 'error', error.message || 'Server Error');
     }
 });
 /**
@@ -75,10 +75,10 @@ exports.resetPassword = (0, utils_1.asyncHandler)(async (req, res) => {
             token: validationSchema_1.default.strings,
         }).validate(req.body);
         if (error)
-            return (0, responseService_1.resSender)(res, 400, "fail", error.details[0].message);
+            return (0, responseService_1.resSender)(res, 400, 'fail', error.details[0].message);
         // Validate received token
         const decoded = await (0, tokenService_1.verifyToken)(token, jwtAccess);
-        console.log("Decoded Payload: ", decoded);
+        console.log('Decoded Payload: ', decoded);
         // Hash the new Password
         const salt = await bcryptjs_1.default.genSalt(10);
         const hashedPwd = await bcryptjs_1.default.hash(newPassword, salt);
@@ -88,11 +88,11 @@ exports.resetPassword = (0, utils_1.asyncHandler)(async (req, res) => {
             },
         });
         if (!user)
-            return (0, responseService_1.resSender)(res, 403, "fail", "Account not Found!");
-        return (0, responseService_1.resSender)(res, 200, "success", "Password updated successfully!");
+            return (0, responseService_1.resSender)(res, 403, 'fail', 'Account not Found!');
+        return (0, responseService_1.resSender)(res, 200, 'success', 'Password updated successfully!');
     }
     catch (error) {
-        logger_1.logger.error("Failed to verify code: ", error);
-        return (0, responseService_1.resSender)(res, 500, "error", error.message || "Server Error");
+        console.error('Failed to verify code: ', error);
+        return (0, responseService_1.resSender)(res, 500, 'error', error.message || 'Server Error');
     }
 });

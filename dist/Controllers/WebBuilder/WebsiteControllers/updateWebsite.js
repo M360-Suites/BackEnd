@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateWebsite = void 0;
 const Website_1 = require("../../../Models/Website");
 const responseService_1 = require("../../../Services/responseService");
-const logger_1 = require("../../../logger/logger");
 const utils_1 = require("../../../helpers/utils");
 exports.updateWebsite = (0, utils_1.asyncHandler)(async (req, res) => {
     try {
@@ -20,12 +19,12 @@ exports.updateWebsite = (0, utils_1.asyncHandler)(async (req, res) => {
             updatedAt: new Date(),
         }, { new: true, runValidators: true });
         if (!updatedWebsite) {
-            return (0, responseService_1.resSender)(res, 404, "error", "Website not found");
+            return (0, responseService_1.resSender)(res, 404, 'error', 'Website not found');
         }
-        return (0, responseService_1.resSender)(res, 200, "success", "Website updated successfully", null, updatedWebsite);
+        return (0, responseService_1.resSender)(res, 200, 'success', 'Website updated successfully', null, updatedWebsite);
     }
     catch (error) {
-        logger_1.logger.error("Error updating website: ", error);
-        return (0, responseService_1.resSender)(res, 500, "error", error.message || "Failed to update website");
+        console.error('Error updating website: ', error);
+        return (0, responseService_1.resSender)(res, 500, 'error', error.message || 'Failed to update website');
     }
 });

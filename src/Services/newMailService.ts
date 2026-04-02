@@ -1,12 +1,12 @@
-import nodemailer from "nodemailer";
-import { google } from "googleapis";
-import { Client } from "@microsoft/microsoft-graph-client";
-import axios from "axios";
-import fs from "fs";
-import { promisify } from "util";
-import path from "path";
-import { logger } from "../logger/logger";
-import { decrypt } from "./encryption";
+import nodemailer from 'nodemailer';
+import { google } from 'googleapis';
+import { Client } from '@microsoft/microsoft-graph-client';
+import axios from 'axios';
+import fs from 'fs';
+import { promisify } from 'util';
+import path from 'path';
+import { logger } from '../logger/logger';
+import { decrypt } from './encryption';
 
 const readFileAsync = promisify(fs.readFile);
 
@@ -18,14 +18,7 @@ const noReplyPassword = process.env.NOREPLY_PASSWORD;
 const smtp = process.env.HOST_SMTP;
 
 interface TokenRecord {
-  provider:
-    | string
-    | "google"
-    | "microsoft"
-    | "zoho"
-    | "custom"
-    | "normal"
-    | "noreply";
+  provider: string | 'google' | 'microsoft' | 'zoho' | 'custom' | 'normal' | 'noreply';
   providerId: string;
   location: string;
   email: string;
@@ -65,9 +58,7 @@ class UnifiedMailService {
     this.clientId = process.env.GOOGLE_CLIENT_ID!;
     this.clientSecret = process.env.GOOGLE_CLIENT_SECRET!;
     this.callBackUrl =
-      process.env.NODE_ENV === "development"
-        ? process.env.SERVER_URL!
-        : process.env.PROD_URL!;
+      process.env.NODE_ENV === 'development' ? process.env.SERVER_URL! : process.env.PROD_URL!;
 
     // Initialize internal transporters
     this.normalTransporter = nodemailer.createTransport({
@@ -112,21 +103,18 @@ class UnifiedMailService {
     if (emailData.bcc && !this.validateEmail(emailData.bcc)) {
       throw new Error(`Invalid 'bcc' email address: ${emailData.bcc}`);
     }
-    if (!emailData.subject || emailData.subject.trim() === "") {
-      throw new Error("Email subject cannot be empty");
+    if (!emailData.subject || emailData.subject.trim() === '') {
+      throw new Error('Email subject cannot be empty');
     }
-    if (!emailData.body || emailData.body.trim() === "") {
-      throw new Error("Email body cannot be empty");
+    if (!emailData.body || emailData.body.trim() === '') {
+      throw new Error('Email body cannot be empty');
     }
   }
 
   /**
    * Main email sending function that routes to the appropriate provider
    */
-  async sendEmail(
-    token: TokenRecord,
-    emailData: UnifiedEmailData
-  ): Promise<any> {
+  async sendEmail(token: TokenRecord, emailData: UnifiedEmailData): Promise<any> {
     // Validate email data first
     this.validateEmailData(emailData);
 
@@ -138,26 +126,18 @@ class UnifiedMailService {
     console.log(`Sending email via ${token.provider} from: ${token.email}`);
 
     switch (token.provider) {
-      case "google":
+      case 'google':
         return this.sendViaGmail(token, emailData);
-      case "microsoft":
+      case 'microsoft':
         return this.sendViaMicrosoft(token, emailData);
-      case "zoho":
+      case 'zoho':
         return this.sendViaZoho(token, emailData);
-      case "custom":
+      case 'custom':
         return this.sendViaSmtp(token, emailData);
-      case "normal":
-        return this.sendViaInternalEmail(
-          this.normalTransporter,
-          normalEmail!,
-          emailData
-        );
-      case "noreply":
-        return this.sendViaInternalEmail(
-          this.noReplyTransporter,
-          noReplyEmail!,
-          emailData
-        );
+      case 'normal':
+        return this.sendViaInternalEmail(this.normalTransporter, normalEmail!, emailData);
+      case 'noreply':
+        return this.sendViaInternalEmail(this.noReplyTransporter, noReplyEmail!, emailData);
       default:
         throw new Error(`Unsupported email provider: ${token.provider}`);
     }
@@ -166,18 +146,11 @@ class UnifiedMailService {
   /**
    * Gmail API implementation
    */
-  private async sendViaGmail(
-    token: TokenRecord,
-    emailData: UnifiedEmailData
-  ): Promise<string> {
+  private async sendViaGmail(token: TokenRecord, emailData: UnifiedEmailData): Promise<string> {
     try {
       const redirectUri = `${this.callBackUrl}/api/campaigns/google/callback`;
 
-      const oauth2Client = new google.auth.OAuth2(
-        this.clientId,
-        this.clientSecret,
-        redirectUri
-      );
+      const oauth2Client = new google.auth.OAuth2(this.clientId, this.clientSecret, redirectUri);
 
       // Set credentials with expiry check
       const expiryDate = this.calculateExpiry(token.accessToken!);
@@ -198,18 +171,18 @@ class UnifiedMailService {
             // await this.updateStoredToken(token);
           }
         } catch (refreshError) {
-          console.error("Failed to refresh Google token:", refreshError);
-          throw new Error("Authentication expired - please reauthenticate");
+          console.error('Failed to refresh Google token:', refreshError);
+          throw new Error('Authentication expired - please reauthenticate');
         }
       }
 
       const gmail = google.gmail({
-        version: "v1",
+        version: 'v1',
         auth: oauth2Client,
         retryConfig: {
           retry: 3,
           retryDelay: 1000,
-          httpMethodsToRetry: ["GET", "POST"],
+          httpMethodsToRetry: ['GET', 'POST'],
           statusCodesToRetry: [
             [100, 199],
             [429, 429],
@@ -224,35 +197,30 @@ class UnifiedMailService {
 
       // Encode the message in base64url format
       const encodedMessage = Buffer.from(rawMessage)
-        .toString("base64")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=+$/, "");
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
 
       // Send the email
       const response = await gmail.users.messages.send({
-        userId: "me",
+        userId: 'me',
         requestBody: {
           raw: encodedMessage,
         },
       });
 
-      console.log("Gmail email sent successfully:", response.data.id);
-      return response.data.id || "";
+      console.log('Gmail email sent successfully:', response.data.id);
+      return response.data.id || '';
     } catch (error: any) {
-      console.error(
-        "Detailed Gmail error:",
-        error.response?.data || error.message
-      );
+      console.error('Detailed Gmail error:', error.response?.data || error.message);
       throw new Error(`Failed to send Gmail email: ${error.message}`);
     }
   }
 
   private calculateExpiry(token: string): number | null {
     try {
-      const payload = JSON.parse(
-        Buffer.from(token.split(".")[1], "base64").toString()
-      );
+      const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
       return payload.exp ? payload.exp * 1000 : null;
     } catch {
       return null;
@@ -262,16 +230,13 @@ class UnifiedMailService {
   /**
    * Creates Gmail raw message in RFC 2822 format
    */
-  private createGmailRawMessage(
-    from: string,
-    emailData: UnifiedEmailData
-  ): string {
+  private createGmailRawMessage(from: string, emailData: UnifiedEmailData): string {
     if (!from || !this.validateEmail(from)) {
       throw new Error(`Invalid 'from' email address: ${from}`);
     }
 
-    const boundary = "----=_Part_" + Date.now();
-    let message = "";
+    const boundary = '----=_Part_' + Date.now();
+    let message = '';
 
     // Headers
     message += `From: ${from}\r\n`;
@@ -288,7 +253,7 @@ class UnifiedMailService {
       // Email body part
       message += `--${boundary}\r\n`;
       message += `Content-Type: ${
-        emailData.isHtml ? "text/html" : "text/plain"
+        emailData.isHtml ? 'text/html' : 'text/plain'
       }; charset="UTF-8"\r\n`;
       message += `Content-Transfer-Encoding: 7bit\r\n\r\n`;
       message += `${emailData.body}\r\n\r\n`;
@@ -297,16 +262,16 @@ class UnifiedMailService {
       for (const attachment of emailData.attachments) {
         message += `--${boundary}\r\n`;
         message += `Content-Type: ${
-          attachment.mimeType || "application/octet-stream"
+          attachment.mimeType || 'application/octet-stream'
         }; name="${attachment.filename}"\r\n`;
         message += `Content-Disposition: attachment; filename="${attachment.filename}"\r\n`;
         message += `Content-Transfer-Encoding: base64\r\n\r\n`;
 
         // Handle both string and Buffer content
         const content =
-          typeof attachment.content === "string"
+          typeof attachment.content === 'string'
             ? attachment.content
-            : attachment.content.toString("base64");
+            : attachment.content.toString('base64');
         message += `${content}\r\n\r\n`;
       }
 
@@ -314,7 +279,7 @@ class UnifiedMailService {
     } else {
       // Simple message without attachments
       message += `Content-Type: ${
-        emailData.isHtml ? "text/html" : "text/plain"
+        emailData.isHtml ? 'text/html' : 'text/plain'
       }; charset="UTF-8"\r\n\r\n`;
       message += emailData.body;
     }
@@ -325,10 +290,7 @@ class UnifiedMailService {
   /**
    * Microsoft Graph API implementation
    */
-  private async sendViaMicrosoft(
-    token: TokenRecord,
-    emailData: UnifiedEmailData
-  ): Promise<any> {
+  private async sendViaMicrosoft(token: TokenRecord, emailData: UnifiedEmailData): Promise<any> {
     try {
       // Validate token first
       // const expiryDate = this.calculateExpiry(token.accessToken!);
@@ -339,19 +301,19 @@ class UnifiedMailService {
       const client = Client.init({
         authProvider: (done) => {
           if (!token.accessToken) {
-            done(new Error("No access token available"), null);
+            done(new Error('No access token available'), null);
           } else {
             done(null, token.accessToken);
           }
         },
-        defaultVersion: "v1.0",
-        debugLogging: process.env.NODE_ENV === "development",
+        defaultVersion: 'v1.0',
+        debugLogging: process.env.NODE_ENV === 'development',
       });
 
       const message: any = {
         subject: emailData.subject,
         body: {
-          contentType: emailData.isHtml ? "HTML" : "Text",
+          contentType: emailData.isHtml ? 'HTML' : 'Text',
           content: emailData.body,
         },
         toRecipients: [{ emailAddress: { address: emailData.to } }],
@@ -370,25 +332,20 @@ class UnifiedMailService {
       // Add attachments
       if (emailData.attachments && emailData.attachments.length > 0) {
         message.attachments = emailData.attachments.map((att) => ({
-          "@odata.type": "#microsoft.graph.fileAttachment",
+          '@odata.type': '#microsoft.graph.fileAttachment',
           name: att.filename,
-          contentType: att.mimeType || "application/octet-stream",
+          contentType: att.mimeType || 'application/octet-stream',
           contentBytes:
-            typeof att.content === "string"
-              ? att.content
-              : att.content.toString("base64"),
+            typeof att.content === 'string' ? att.content : att.content.toString('base64'),
         }));
       }
 
-      return client.api("/me/sendMail").post({
+      return client.api('/me/sendMail').post({
         message,
         saveToSentItems: true,
       });
     } catch (error: any) {
-      console.error(
-        "Detailed Microsoft error:",
-        error.response?.data || error.message
-      );
+      console.error('Detailed Microsoft error:', error.response?.data || error.message);
       throw new Error(`Failed to send Microsoft email: ${error.message}`);
     }
   }
@@ -396,37 +353,32 @@ class UnifiedMailService {
   /**
    * Zoho Mail API implementation
    */
-  private async sendViaZoho(
-    token: TokenRecord,
-    emailData: UnifiedEmailData
-  ): Promise<any> {
+  private async sendViaZoho(token: TokenRecord, emailData: UnifiedEmailData): Promise<any> {
     try {
       if (!token.providerId) {
-        throw new Error(
-          "Account data malformed, please reauthenticate the system"
-        );
+        throw new Error('Account data malformed, please reauthenticate the system');
       }
 
       // Validate and refresh token if needed
       if (!token.accessToken || this.isTokenExpired(token.accessToken)) {
-        console.log("Token Expired");
+        console.log('Token Expired');
         token = await this.refreshZohoToken(token);
       }
 
       // Determine the correct endpoint based on location
       const mailEndpoint =
-        token.location === "eu"
-          ? "https://mail.zoho.eu"
-          : token.location === "in"
-          ? "https://mail.zoho.in"
-          : "https://mail.zoho.com";
+        token.location === 'eu'
+          ? 'https://mail.zoho.eu'
+          : token.location === 'in'
+            ? 'https://mail.zoho.in'
+            : 'https://mail.zoho.com';
 
       const payload: any = {
         fromAddress: token.email,
         toAddress: emailData.to,
         subject: emailData.subject,
         content: emailData.body,
-        askReceipt: "yes",
+        askReceipt: 'yes',
       };
 
       if (emailData.cc) payload.ccAddress = emailData.cc;
@@ -438,10 +390,10 @@ class UnifiedMailService {
         {
           headers: {
             Authorization: `Zoho-oauthtoken ${token.accessToken}`,
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           timeout: 10000,
-        }
+        },
       );
 
       if (response.status >= 400) {
@@ -450,29 +402,20 @@ class UnifiedMailService {
 
       return response.data;
     } catch (error: any) {
-      console.error(
-        "Detailed Zoho error:",
-        error.response?.data || error.message
-      );
+      console.error('Detailed Zoho error:', error.response?.data || error.message);
       if (error.response?.status === 404) {
         throw new Error(
-          "Zoho Mail account not found. Please ensure the user has a valid Zoho Mail account."
+          'Zoho Mail account not found. Please ensure the user has a valid Zoho Mail account.',
         );
       }
-      throw new Error(
-        `Failed to send via Zoho: ${
-          error.response?.data?.message || error.message
-        }`
-      );
+      throw new Error(`Failed to send via Zoho: ${error.response?.data?.message || error.message}`);
     }
   }
 
   private isTokenExpired(token: string): boolean {
     try {
-      const payload = JSON.parse(
-        Buffer.from(token.split(".")[1], "base64").toString()
-      );
-      console.log("Exp: ", payload);
+      const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+      console.log('Exp: ', payload);
       return payload.exp * 1000 < Date.now();
     } catch {
       return true; // Assume expired if we can't parse
@@ -481,27 +424,27 @@ class UnifiedMailService {
 
   private async refreshZohoToken(token: TokenRecord): Promise<TokenRecord> {
     if (!token.refreshToken) {
-      throw new Error("Refresh token missing - reauthentication required");
+      throw new Error('Refresh token missing - reauthentication required');
     }
 
     try {
       const response = await axios.post(
-        "https://accounts.zoho.com/oauth/v2/token",
+        'https://accounts.zoho.com/oauth/v2/token',
         new URLSearchParams({
           refresh_token: token.refreshToken,
           client_id: process.env.ZOHO_CLIENT_ID!,
           client_secret: process.env.ZOHO_CLIENT_SECRET!,
-          grant_type: "refresh_token",
+          grant_type: 'refresh_token',
         }),
         {
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            'Content-Type': 'application/x-www-form-urlencoded',
           },
           timeout: 10000,
-        }
+        },
       );
 
-      console.log("new token: ", JSON.stringify(response.data, null, 2));
+      console.log('new token: ', JSON.stringify(response.data, null, 2));
 
       return {
         ...token,
@@ -509,39 +452,32 @@ class UnifiedMailService {
         // Refresh token remains the same
       };
     } catch (error: any) {
-      console.error(
-        "Zoho token refresh failed:",
-        error.response?.data || error.message
-      );
-      throw new Error(
-        "Failed to refresh Zoho token - reauthentication required"
-      );
+      console.error('Zoho token refresh failed:', error.response?.data || error.message);
+      throw new Error('Failed to refresh Zoho token - reauthentication required');
     }
   }
 
-  private async refreshMicrosoftToken(
-    token: TokenRecord
-  ): Promise<TokenRecord> {
+  private async refreshMicrosoftToken(token: TokenRecord): Promise<TokenRecord> {
     if (!token.refreshToken) {
-      throw new Error("Refresh token missing - reauthentication required");
+      throw new Error('Refresh token missing - reauthentication required');
     }
 
     try {
       const response = await axios.post(
-        "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+        'https://login.microsoftonline.com/common/oauth2/v2.0/token',
         new URLSearchParams({
           client_id: process.env.MICROSOFT_CLIENT_ID!,
-          scope: "https://graph.microsoft.com/.default",
+          scope: 'https://graph.microsoft.com/.default',
           refresh_token: token.refreshToken,
-          grant_type: "refresh_token",
+          grant_type: 'refresh_token',
           client_secret: process.env.MICROSOFT_CLIENT_SECRET!,
         }),
         {
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
+            'Content-Type': 'application/x-www-form-urlencoded',
           },
           timeout: 10000,
-        }
+        },
       );
 
       return {
@@ -550,23 +486,15 @@ class UnifiedMailService {
         refreshToken: response.data.refresh_token || token.refreshToken,
       };
     } catch (error: any) {
-      console.error(
-        "Microsoft token refresh failed:",
-        error.response?.data || error.message
-      );
-      throw new Error(
-        "Failed to refresh Microsoft token - reauthentication required"
-      );
+      console.error('Microsoft token refresh failed:', error.response?.data || error.message);
+      throw new Error('Failed to refresh Microsoft token - reauthentication required');
     }
   }
 
   /**
    * Custom SMTP implementation
    */
-  private async sendViaSmtp(
-    token: TokenRecord,
-    emailData: UnifiedEmailData
-  ): Promise<any> {
+  private async sendViaSmtp(token: TokenRecord, emailData: UnifiedEmailData): Promise<any> {
     const transporter = nodemailer.createTransport({
       host: token.smtpHost,
       port: token.smtpPort || 465,
@@ -582,11 +510,11 @@ class UnifiedMailService {
     return new Promise((resolve, reject) => {
       transporter.sendMail(mailOptions, (error: any, info: any) => {
         if (error) {
-          console.error("Error sending SMTP email:", error);
+          console.error('Error sending SMTP email:', error);
           reject(error);
         } else {
-          logger.info("SMTP email sent successfully");
-          console.log("Message ID:", info.messageId);
+          logger.info('SMTP email sent successfully');
+          console.log('Message ID:', info.messageId);
           resolve(info);
         }
       });
@@ -599,14 +527,11 @@ class UnifiedMailService {
   private async sendViaInternalEmail(
     transporter: nodemailer.Transporter,
     fromEmail: string,
-    emailData: UnifiedEmailData
+    emailData: UnifiedEmailData,
   ): Promise<any> {
     // Add default logo attachment for internal emails
     const defaultAttachments = await this.getDefaultAttachments();
-    const allAttachments = [
-      ...defaultAttachments,
-      ...(emailData.attachments || []),
-    ];
+    const allAttachments = [...defaultAttachments, ...(emailData.attachments || [])];
 
     const mailOptions = this.createNodemailerOptions(fromEmail, {
       ...emailData,
@@ -616,11 +541,11 @@ class UnifiedMailService {
     return new Promise((resolve, reject) => {
       transporter.sendMail(mailOptions, (error: any, info) => {
         if (error) {
-          logger.error("Error occurred:", error.message);
+          console.error('Error occurred:', error.message);
           reject(error);
         } else {
-          logger.info("Internal email sent successfully!");
-          console.log("Message ID:", info.messageId);
+          logger.info('Internal email sent successfully!');
+          console.log('Message ID:', info.messageId);
           logger.info(info.response);
           resolve(info);
         }
@@ -631,10 +556,7 @@ class UnifiedMailService {
   /**
    * Creates nodemailer options from unified email data
    */
-  private createNodemailerOptions(
-    from: string,
-    emailData: UnifiedEmailData
-  ): any {
+  private createNodemailerOptions(from: string, emailData: UnifiedEmailData): any {
     const options: any = {
       from,
       to: emailData.to,
@@ -671,19 +593,19 @@ class UnifiedMailService {
   private async getDefaultAttachments(): Promise<Array<any>> {
     try {
       const icon = await readFileAsync(
-        path.join(__dirname, "..", "public", "assets", "images", "logo.png")
+        path.join(__dirname, '..', 'public', 'assets', 'images', 'logo.png'),
       );
 
       return [
         {
-          filename: "icon.png",
+          filename: 'icon.png',
           content: icon,
-          encoding: "base64",
-          cid: "icon@m360suites.com",
+          encoding: 'base64',
+          cid: 'icon@m360suites.com',
         },
       ];
     } catch (error) {
-      console.warn("Could not load default logo attachment:", error);
+      console.warn('Could not load default logo attachment:', error);
       return [];
     }
   }
@@ -695,7 +617,7 @@ class UnifiedMailService {
     token: TokenRecord,
     to: string,
     subject: string,
-    body: string
+    body: string,
   ): Promise<any> {
     return this.sendEmail(token, {
       to,
@@ -712,7 +634,7 @@ class UnifiedMailService {
     token: TokenRecord,
     to: string,
     subject: string,
-    htmlBody: string
+    htmlBody: string,
   ): Promise<any> {
     return this.sendEmail(token, {
       to,
@@ -729,13 +651,13 @@ class UnifiedMailService {
     mailRecipient: string,
     subject: string,
     mailContent: string,
-    mailSender: string
+    mailSender: string,
   ): Promise<any> {
     const token: TokenRecord = {
-      provider: mailSender === noReplyEmail ? "noreply" : "normal",
+      provider: mailSender === noReplyEmail ? 'noreply' : 'normal',
       email: mailSender,
-      providerId: "",
-      location: "",
+      providerId: '',
+      location: '',
     };
 
     return this.sendEmail(token, {
@@ -751,19 +673,16 @@ class UnifiedMailService {
    */
   async refreshGoogleToken(refreshToken: string): Promise<string> {
     try {
-      const oauth2Client = new google.auth.OAuth2(
-        this.clientId,
-        this.clientSecret
-      );
+      const oauth2Client = new google.auth.OAuth2(this.clientId, this.clientSecret);
 
       oauth2Client.setCredentials({
         refresh_token: refreshToken,
       });
 
       const { credentials } = await oauth2Client.refreshAccessToken();
-      return credentials.access_token || "";
+      return credentials.access_token || '';
     } catch (error) {
-      console.error("Error refreshing Google token:", error);
+      console.error('Error refreshing Google token:', error);
       throw new Error(`Failed to refresh access token: ${error}`);
     }
   }
@@ -773,7 +692,7 @@ class UnifiedMailService {
    */
   validateEmailDataOnly(
     token: TokenRecord,
-    emailData: UnifiedEmailData
+    emailData: UnifiedEmailData,
   ): { valid: boolean; errors: string[] } {
     const errors: string[] = [];
 
@@ -783,11 +702,8 @@ class UnifiedMailService {
       }
 
       // Provider-specific validation
-      if (
-        token.provider === "google" &&
-        (!token.accessToken || !token.refreshToken)
-      ) {
-        errors.push("Google provider requires accessToken and refreshToken");
+      if (token.provider === 'google' && (!token.accessToken || !token.refreshToken)) {
+        errors.push('Google provider requires accessToken and refreshToken');
       }
 
       this.validateEmailData(emailData);
@@ -806,12 +722,7 @@ class UnifiedMailService {
 const unifiedMailService = new UnifiedMailService();
 
 // Export both the class and the singleton instance
-export {
-  UnifiedMailService,
-  unifiedMailService,
-  TokenRecord,
-  UnifiedEmailData,
-};
+export { UnifiedMailService, unifiedMailService, TokenRecord, UnifiedEmailData };
 
 // Legacy exports for backward compatibility
 export const sendMail = unifiedMailService.sendMail.bind(unifiedMailService);

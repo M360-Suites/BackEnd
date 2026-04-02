@@ -4,7 +4,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.removeContacts = void 0;
-const logger_1 = require("../../../logger/logger");
 const responseService_1 = require("../../../Services/responseService");
 const joi_1 = __importDefault(require("joi"));
 const validationSchema_1 = __importDefault(require("../../../Services/validationSchema"));
@@ -16,18 +15,18 @@ exports.removeContacts = (0, utils_1.asyncHandler)(async (req, res) => {
             ids: joi_1.default.array().items(validationSchema_1.default.objectId).required(),
         }).validate(req.body);
         if (error)
-            return (0, responseService_1.resSender)(res, 400, "fail", error.details[0].message);
+            return (0, responseService_1.resSender)(res, 400, 'fail', error.details[0].message);
         const { ids } = req.body;
         if (!ids || ids.length < 1)
-            return (0, responseService_1.resSender)(res, 400, "fail", "Emails addresses is required");
+            return (0, responseService_1.resSender)(res, 400, 'fail', 'Emails addresses is required');
         await Campaign_1.Subscriber.deleteMany({
-            subscribee: (req.organizationId)?._id,
+            subscribee: req.organizationId?._id,
             _id: { $in: ids },
         });
-        return (0, responseService_1.resSender)(res, 200, "success", "Contacts removed successfully");
+        return (0, responseService_1.resSender)(res, 200, 'success', 'Contacts removed successfully');
     }
     catch (error) {
-        logger_1.logger.error(`Error removing contacts: ${error}`);
-        return (0, responseService_1.resSender)(res, 500, "error", "Internal server error");
+        console.error(`Error removing contacts: ${error}`);
+        return (0, responseService_1.resSender)(res, 500, 'error', 'Internal server error');
     }
 });

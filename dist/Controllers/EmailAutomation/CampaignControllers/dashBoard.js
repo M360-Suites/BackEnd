@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getDashboardData = void 0;
-const logger_1 = require("../../../logger/logger");
 const responseService_1 = require("../../../Services/responseService");
 const Campaign_1 = require("../../../Models/Campaign");
 const utils_1 = require("../../../helpers/utils");
@@ -19,16 +18,16 @@ exports.getDashboardData = (0, utils_1.asyncHandler)(async (req, res) => {
             {
                 $group: {
                     _id: null,
-                    totalSent: { $sum: "$totalSent" },
-                    totalDelivered: { $sum: "$totalDelivered" },
-                    totalOpened: { $sum: "$totalOpened" },
+                    totalSent: { $sum: '$totalSent' },
+                    totalDelivered: { $sum: '$totalDelivered' },
+                    totalOpened: { $sum: '$totalOpened' },
                 },
             },
         ]);
-        const { totalSent = 0, totalDelivered = 0, totalOpened = 0, } = emailStats[0] || {};
+        const { totalSent = 0, totalDelivered = 0, totalOpened = 0 } = emailStats[0] || {};
         // Fetch campaign reports
         const campaignReports = await Campaign_1.Campaign.find({ org: orgId })
-            .select("name totalSent totalDelivered status")
+            .select('name totalSent totalDelivered status')
             .lean();
         const campaignReportData = campaignReports.map((campaign) => ({
             name: campaign.name,
@@ -45,7 +44,7 @@ exports.getDashboardData = (0, utils_1.asyncHandler)(async (req, res) => {
         });
         const activeSubscribers = await Campaign_1.Subscriber.countDocuments({
             subscribee: orgId,
-            status: "Active",
+            status: 'Active',
         });
         const inactiveSubscribers = totalSubscribers - activeSubscribers;
         const audienceInsights = {
@@ -58,17 +57,17 @@ exports.getDashboardData = (0, utils_1.asyncHandler)(async (req, res) => {
             { $match: { org: orgId } },
             {
                 $group: {
-                    _id: { month: { $month: "$createdAt" }, type: "$type" },
-                    totalSent: { $sum: "$totalSent" },
+                    _id: { month: { $month: '$createdAt' }, type: '$type' },
+                    totalSent: { $sum: '$totalSent' },
                 },
             },
             {
                 $group: {
-                    _id: "$_id.month",
+                    _id: '$_id.month',
                     data: {
                         $push: {
-                            type: "$_id.type",
-                            totalSent: "$totalSent",
+                            type: '$_id.type',
+                            totalSent: '$totalSent',
                         },
                     },
                 },
@@ -78,8 +77,7 @@ exports.getDashboardData = (0, utils_1.asyncHandler)(async (req, res) => {
         const barChartData = emailPerformance.map((item) => ({
             month: item._id,
             data: item.data.reduce((acc, curr) => {
-                acc[curr.type === "One_Time" ? "oneTime" : "automated"] =
-                    curr.totalSent;
+                acc[curr.type === 'One_Time' ? 'oneTime' : 'automated'] = curr.totalSent;
                 return acc;
             }, { oneTime: 0, automated: 0 }),
         }));
@@ -94,10 +92,10 @@ exports.getDashboardData = (0, utils_1.asyncHandler)(async (req, res) => {
             audienceInsights,
             barChartData,
         };
-        return (0, responseService_1.resSender)(res, 200, "success", "Dashboard data fetched successfully", null, dashboardData);
+        return (0, responseService_1.resSender)(res, 200, 'success', 'Dashboard data fetched successfully', null, dashboardData);
     }
     catch (error) {
-        logger_1.logger.error("Error fetching dashboard data:", error);
-        return (0, responseService_1.resSender)(res, 500, "error", error.message || "Error fetching dashboard data");
+        console.error('Error fetching dashboard data:', error);
+        return (0, responseService_1.resSender)(res, 500, 'error', error.message || 'Error fetching dashboard data');
     }
 });
