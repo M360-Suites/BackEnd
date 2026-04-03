@@ -88,7 +88,7 @@ export const COM_CONFIGS: Record<ComPlatform, ComOAuthConfig> = {
   [ComPlatform.SLACK]: {
     clientId: process.env.SLACK_CLIENT_ID!,
     clientSecret: process.env.SLACK_CLIENT_SECRET!,
-    redirectUri: `${liveClientUrl}/comm-auth/callback`,
+    redirectUri: `${clientUrl}/comm-auth/callback`,
     scopes: [
       'channels:read',
       'channels:write',

@@ -111,7 +111,7 @@ for (const file of routeFiles) {
 
     // Log the routes that were registered
     if (route && route.stack) {
-      logger.info(`Routes in ${file}:`, route.stack.map((r: any) => r.route?.path).filter(Boolean));
+      // logger.info(`Routes in ${file}:`, route.stack.map((r: any) => r.route?.path).filter(Boolean));
     }
   }
 }
@@ -165,13 +165,13 @@ server.on('error', (e: any) => {
       server.listen(PORT);
     }, 2000);
   }
-  if (e.code === 'EADDRINUSE') {
-    console.error('Address in use, retrying...');
-    setTimeout(() => {
-      server.close();
-      server.listen(PORT);
-    }, 2000);
-  }
+  // if (e.code === 'EADDRINUSE') {
+  //   console.error('Address in use, retrying...');
+  //   setTimeout(() => {
+  //     server.close();
+  //     server.listen(PORT);
+  //   }, 2000);
+  // }
 });
 
 // 07018608174

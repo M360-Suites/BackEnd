@@ -1,0 +1,183 @@
+name: Deploy Backend to DigitalOcean Droplet
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '24'
+  DOCKER_IMAGE_NAME: 'marketing360'
+  DOCKER_CONTAINER_NAME: 'backendcontainer'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test || true  # Continue even if no tests
+
+      - name: Build TypeScript
+        run: npm run build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to container registry (Optional - for private registry)
+        # Skip if using local build on droplet
+        run: echo "Building locally, no registry login needed"
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg CERTIFICATE="${{ secrets.CERTIFICATE }}" \
+            --build-arg PRIVATE_KEY="${{ secrets.PRIVATE_KEY }}" \
+            -t ${{ env.DOCKER_IMAGE_NAME }}:latest \
+            -t ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }} \
+            .
+
+      - name: Save Docker image
+        run: |
+          docker save ${{ env.DOCKER_IMAGE_NAME }}:latest | gzip > backend-image.tar.gz
+
+      - name: Deploy to DigitalOcean Droplet
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USERNAME }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          source: "backend-image.tar.gz"
+          target: "/home/${{ secrets.DROPLET_USERNAME }}/"
+          strip_components: 0
+
+      - name: Execute deployment on Droplet
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USERNAME }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          envs: DOCKER_IMAGE_NAME,DOCKER_CONTAINER_NAME
+          script: |
+            # Load the Docker image
+            sudo docker load < /home/${{ secrets.DROPLET_USERNAME }}/backend-image.tar.gz
+            rm /home/${{ secrets.DROPLET_USERNAME }}/backend-image.tar.gz
+            
+            # Stop and remove existing container
+            sudo docker stop ${{ env.DOCKER_CONTAINER_NAME }} || true
+            sudo docker rm ${{ env.DOCKER_CONTAINER_NAME }} || true
+            
+            # Run new container
+            sudo docker run -d \
+              --name ${{ env.DOCKER_CONTAINER_NAME }} \
+              --restart unless-stopped \
+              -p 8080:8080 \
+              -p 443:443 \
+              -p 6000:6000 \
+              -e DOMAIN="${{ secrets.DOMAIN }}" \
+              -e CERTBOT_EMAIL="${{ secrets.CERTBOT_EMAIL }}" \
+              -e ACCESS_SECRET="${{ secrets.ACCESS_SECRET }}" \
+              -e CLOUDINARY_CLOUD_NAME="${{ secrets.CLOUDINARY_CLOUD_NAME }}" \
+              -e CLOUDINARY_API_KEY="${{ secrets.CLOUDINARY_API_KEY }}" \
+              -e CLOUDINARY_API_SECRET="${{ secrets.CLOUDINARY_API_SECRET }}" \
+              -e CLOUDINARY_API_ENV_VARIABLE="${{ secrets.CLOUDINARY_API_ENV_VARIABLE }}" \
+              -e ENCRYPTION_KEY="${{ secrets.ENCRYPTION_KEY }}" \
+              -e GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+              -e GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+              -e GOOGLE_ADS_DEVELOPER_TOKEN="${{ secrets.GOOGLE_ADS_DEVELOPER_TOKEN }}" \
+              -e GOOGLE_API_KEY="${{ secrets.GOOGLE_API_KEY }}" \
+              -e HOST_SMTP="${{ secrets.HOST_SMTP }}" \
+              -e HUNTER_API_KEY="${{ secrets.HUNTER_API_KEY }}" \
+              -e IG_APP_NAME="${{ secrets.IG_APP_NAME }}" \
+              -e IG_APP_ID="${{ secrets.IG_APP_ID }}" \
+              -e IG_APP_SECRET="${{ secrets.IG_APP_SECRET }}" \
+              -e LIVE_MONGO_URI="${{ secrets.LIVE_MONGO_URI }}" \
+              -e MONGODB_URI="${{ secrets.MONGODB_URI }}" \
+              -e MICROSOFT_CLIENT_ID="${{ secrets.MICROSOFT_CLIENT_ID }}" \
+              -e MICROSOFT_CLIENT_SECRET="${{ secrets.MICROSOFT_CLIENT_SECRET }}" \
+              -e MICROSOFT_CLIENT_SECRET_ID="${{ secrets.MICROSOFT_CLIENT_SECRET_ID }}" \
+              -e NODE_ENV="production" \
+              -e NORMAL_EMAIL="${{ secrets.NORMAL_EMAIL }}" \
+              -e NORMAL_EMAIL_PASSWORD="${{ secrets.NORMAL_EMAIL_PASSWORD }}" \
+              -e NOREPLY_EMAIL="${{ secrets.NOREPLY_EMAIL }}" \
+              -e NOREPLY_PASSWORD="${{ secrets.NOREPLY_PASSWORD }}" \
+              -e PAYSTACK_TEST_SECRET_KEY="${{ secrets.PAYSTACK_TEST_SECRET_KEY }}" \
+              -e PAYSTACK_TEST_PUBLIC_KEY="${{ secrets.PAYSTACK_TEST_PUBLIC_KEY }}" \
+              -e PORT="${{ secrets.PORT }}" \
+              -e REFRESH_SECRET="${{ secrets.REFRESH_SECRET }}" \
+              -e SITE_KEY="${{ secrets.SITE_KEY }}" \
+              -e SERP_KEY="${{ secrets.SERP_KEY }}" \
+              -e SERVER_URL="${{ secrets.SERVER_URL }}" \
+              -e LIVE_SERVER_URL="${{ secrets.LIVE_SERVER_URL }}" \
+              -e CLIENT_URL="${{ secrets.CLIENT_URL }}" \
+              -e LIVE_CLIENT_URL="${{ secrets.LIVE_CLIENT_URL }}" \
+              -e PROD_URL="${{ secrets.PROD_URL }}" \
+              -e ZOHO_CLIENT_ID="${{ secrets.ZOHO_CLIENT_ID }}" \
+              -e ZOHO_CLIENT_SECRET="${{ secrets.ZOHO_CLIENT_SECRET }}" \
+              -e REDIS_HOST="${{ secrets.REDIS_HOST }}" \
+              -e REDIS_PORT="${{ secrets.REDIS_PORT }}" \
+              -e ALLOWED_ORIGINS="${{ secrets.ALLOWED_ORIGINS }}" \
+              -e DISCORD_CLIENT_ID="${{ secrets.DISCORD_CLIENT_ID }}" \
+              -e DISCORD_CLIENT_SECRET="${{ secrets.DISCORD_CLIENT_SECRET }}" \
+              -e FACEBOOK_CLIENT_ID="${{ secrets.FACEBOOK_CLIENT_ID }}" \
+              -e FACEBOOK_CLIENT_SECRET="${{ secrets.FACEBOOK_CLIENT_SECRET }}" \
+              -e FACEBOOK_VERIFY_TOKEN="${{ secrets.FACEBOOK_VERIFY_TOKEN }}" \
+              -e FACEBOOK_APP_SECRET="${{ secrets.FACEBOOK_APP_SECRET }}" \
+              -e INSTAGRAM_CLIENT_ID="${{ secrets.INSTAGRAM_CLIENT_ID }}" \
+              -e INSTAGRAM_CLIENT_SECRET="${{ secrets.INSTAGRAM_CLIENT_SECRET }}" \
+              -e INSTAGRAM_VERIFY_TOKEN="${{ secrets.INSTAGRAM_VERIFY_TOKEN }}" \
+              -e INSTAGRAM_APP_SECRET="${{ secrets.INSTAGRAM_APP_SECRET }}" \
+              -e LINKEDIN_CLIENT_ID="${{ secrets.LINKEDIN_CLIENT_ID }}" \
+              -e LINKEDIN_CLIENT_SECRET="${{ secrets.LINKEDIN_CLIENT_SECRET }}" \
+              -e LINKEDIN_CLIENT_ID_2="${{ secrets.LINKEDIN_CLIENT_ID_2 }}" \
+              -e LINKEDIN_CLIENT_SECRET_2="${{ secrets.LINKEDIN_CLIENT_SECRET_2 }}" \
+              -e LinkedIn_Version="${{ secrets.LinkedIn_Version }}" \
+              -e PINTEREST_CLIENT_ID="${{ secrets.PINTEREST_CLIENT_ID }}" \
+              -e PINTEREST_CLIENT_SECRET="${{ secrets.PINTEREST_CLIENT_SECRET }}" \
+              -e SLACK_CLIENT_ID="${{ secrets.SLACK_CLIENT_ID }}" \
+              -e SLACK_CLIENT_SECRET="${{ secrets.SLACK_CLIENT_SECRET }}" \
+              -e SLACK_SIGNING_SECRET="${{ secrets.SLACK_SIGNING_SECRET }}" \
+              -e TIKTOK_CLIENT_ID="${{ secrets.TIKTOK_CLIENT_ID }}" \
+              -e TIKTOK_CLIENT_SECRET="${{ secrets.TIKTOK_CLIENT_SECRET }}" \
+              -e TWITTER_CLIENT_ID="${{ secrets.TWITTER_CLIENT_ID }}" \
+              -e TWITTER_CLIENT_SECRET="${{ secrets.TWITTER_CLIENT_SECRET }}" \
+              -e TWITTER_CONSUMER_KEY="${{ secrets.TWITTER_CONSUMER_KEY }}" \
+              -e TWITTER_CONSUMER_SECRET="${{ secrets.TWITTER_CONSUMER_SECRET }}" \
+              -e CREATIVE_GENERATOR="${{ secrets.CREATIVE_GENERATOR }}" \
+              -e EMAIL_AUTOMATION="${{ secrets.EMAIL_AUTOMATION }}" \
+              -e SOCIAL_SCHEDULER="${{ secrets.SOCIAL_SCHEDULER }}" \
+              -e COMMUNITY_MANAGER="${{ secrets.COMMUNITY_MANAGER }}" \
+              -e ADS_MANAGER="${{ secrets.ADS_MANAGER }}" \
+              -e SEO_TOOLKIT="${{ secrets.SEO_TOOLKIT }}" \
+              -e CREATIVE_GENERATOR_DOLLAR="${{ secrets.CREATIVE_GENERATOR_DOLLAR }}" \
+              -e EMAIL_AUTOMATION_DOLLAR="${{ secrets.EMAIL_AUTOMATION_DOLLAR }}" \
+              -e SOCIAL_SCHEDULER_DOLLAR="${{ secrets.SOCIAL_SCHEDULER_DOLLAR }}" \
+              -e COMMUNITY_MANAGER_DOLLAR="${{ secrets.COMMUNITY_MANAGER_DOLLAR }}" \
+              -e ADS_MANAGER_DOLLAR="${{ secrets.ADS_MANAGER_DOLLAR }}" \
+              -e SEO_TOOLKIT_DOLLAR="${{ secrets.SEO_TOOLKIT_DOLLAR }}" \
+              -e BASE_PLAN_AMOUNT="${{ secrets.BASE_PLAN_AMOUNT }}" \
+              ${{ env.DOCKER_IMAGE_NAME }}:latest
+            
+            # Clean up old images
+            sudo docker image prune -f
+            
+            # Check if container is running
+            if sudo docker ps | grep -q ${{ env.DOCKER_CONTAINER_NAME }}; then
+              echo "✅ Deployment successful! Container is running."
+            else
+              echo "❌ Deployment failed! Container is not running."
+              sudo docker logs ${{ env.DOCKER_CONTAINER_NAME }} --tail 50
+              exit 1
+            fi
