@@ -14,6 +14,7 @@ WORKDIR /app
 # Install Certbot, Nginx, and dependencies
 RUN apk add --no-cache \
     certbot \
+    docker \
     nginx \
     openssl \
     python3 \
