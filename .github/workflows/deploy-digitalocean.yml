@@ -86,6 +86,22 @@ jobs:
               sudo apt-get install -y docker-ce docker-ce-cli containerd.io
               sudo usermod -aG docker $USER
             fi
+
+            # Create Docker network if it doesn't exist
+            sudo docker network create marketing360-network || true
+            
+            # Stop and remove existing Redis container if running on host
+            sudo systemctl stop redis-server || true
+            sudo systemctl disable redis-server || true
+            
+            # Run Redis container
+            sudo docker run -d \
+              --name redis-container \
+              --restart unless-stopped \
+              --network marketing360-network \
+              -v redis-data:/data \
+              redis:7-alpine \
+              redis-server --appendonly yes
             
             # Load the Docker image
             sudo docker load < /home/${{ secrets.DROPLET_USERNAME }}/backend-image.tar.gz
@@ -99,6 +115,7 @@ jobs:
             sudo docker run -d \
               --name ${{ env.DOCKER_CONTAINER_NAME }} \
               --restart unless-stopped \
+              --network marketing360-network \
               -p 8080:8080 \
               -p 443:443 \
               -p 6000:6000 \
