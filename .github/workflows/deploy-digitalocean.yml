@@ -84,7 +84,7 @@ jobs:
               sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
               sudo apt-get update
               sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-              sudo usermod -aG docker ubuntu
+              sudo usermod -aG docker $USER
             fi
             
             # Load the Docker image
@@ -197,4 +197,12 @@ jobs:
               echo "❌ Deployment failed! Container is not running."
               sudo docker logs ${{ env.DOCKER_CONTAINER_NAME }} --tail 50
               exit 1
+            fi
+
+            # Verify deployment
+            sleep 10
+            if curl -f -k https://${{ secrets.DOMAIN }}/health; then
+              echo "✅ Health check passed"
+            else
+              echo "⚠️  Health check failed, but container may still be starting"
             fi
