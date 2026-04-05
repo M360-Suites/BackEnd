@@ -107,6 +107,7 @@ export const handleCallback = asyncHandler(async (req: CustomRequest, res: Respo
         refreshToken: result.refreshToken ? encrypt(result.refreshToken) : undefined,
         providerId: result.accountId,
         accountName: result.accountName,
+        expiresAt: result.expiresAt ? new Date(Date.now() + result.expiresAt * 1000) : undefined,
       },
       { upsert: true },
     );
@@ -161,6 +162,7 @@ export const zohoConsent = async (code: string, orgId: string, location: string)
 
     const accessToken = data.access_token;
     const refreshToken = data.refresh_token ? data.refresh_token : null;
+    const expiresAt = data.expires_in;
 
     if (!refreshToken) {
       throw new Error('No refresh token received from Zoho');
@@ -193,6 +195,8 @@ export const zohoConsent = async (code: string, orgId: string, location: string)
 
     // Use the first account ID (most users will only have one)
     const accountId = accountsResponse.data.data[0].accountId;
+    const accountName = accountsResponse.data.data[0].accountName;
+    console.log('Accounts: ', JSON.stringify(accountsResponse.data.data));
 
     let result: MailRes = {
       accessToken,
@@ -201,6 +205,8 @@ export const zohoConsent = async (code: string, orgId: string, location: string)
       email: userEmail,
       provider: 'zoho' as MailPlatform,
       orgId,
+      accountName,
+      expiresAt,
     };
 
     return result;

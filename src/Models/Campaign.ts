@@ -1,4 +1,5 @@
 import { Document, model, Schema, Types } from "mongoose";
+import { MailPlatform } from "../Controllers/EmailAutomation/Auth/MailOauth";
 
 export enum CampaignType {
   oneTime = "One_Time",
@@ -143,7 +144,7 @@ const subscribersSchema = new Schema({
 
 export interface IEmailCredential extends Document {
   orgId: Schema.Types.ObjectId;
-  provider: string;
+  provider: MailPlatform;
   email: string;
   accessToken: string;
   refreshToken: string;
@@ -153,6 +154,7 @@ export interface IEmailCredential extends Document {
   smtpPassword: string;
   accountName?: string;
   providerId: string;
+  expiresAt?: Date;
   location: string;
   createdAt: Date;
   updatedAt: Date;
@@ -163,7 +165,7 @@ const EmailCredentialSchema = new Schema(
     orgId: { type: Schema.Types.ObjectId, ref: "Organization", required: true },
     provider: {
       type: String,
-      enum: ["google", "microsoft", "zoho", "custom"],
+      enum: Object.values(MailPlatform),
       required: true,
     },
     email: { type: String, required: true },
@@ -175,6 +177,7 @@ const EmailCredentialSchema = new Schema(
     smtpPassword: String,
     accountName: { type: String },
     providerId: String,
+    expiresAt: { type: Date },
     location: String,
   },
   { timestamps: true }

@@ -1,5 +1,7 @@
 import axios, { AxiosError } from "axios";
 import { extractErrorMessage } from "../../../helpers/axiosError";
+import { decrypt, encrypt } from "../../../Services/encryption";
+import { EmailCredential, IEmailCredential } from "../../../Models/Campaign";
 
 export enum MailPlatform {
   GOOGLE = "google",
@@ -25,6 +27,7 @@ export interface MailRes {
   accountId: string;
   accountName?: string;
   orgId: string;
+  expiresAt: number;
 }
 
 const MAIL_CONFIG: Record<MailPlatform, MailConfig> = {
@@ -32,37 +35,37 @@ const MAIL_CONFIG: Record<MailPlatform, MailConfig> = {
     clientId: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     redirectUri: `${clientUrl}/mail-auth/callback`,
-    scopes: ["profile", "email", "https://www.googleapis.com/auth/gmail.send"],
-    authUrl: "https://accounts.google.com/o/oauth2/v2/auth",
-    tokenUrl: "https://oauth2.googleapis.com/token",
+    scopes: ['profile', 'email', 'https://www.googleapis.com/auth/gmail.send'],
+    authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenUrl: 'https://oauth2.googleapis.com/token',
   },
   [MailPlatform.MICROSOFT]: {
     clientId: process.env.MICROSOFT_CLIENT_ID!,
     clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
     redirectUri: `${clientUrl}/mail-auth/callback`,
     scopes: [
-      "openid",
-      "profile",
-      "email",
-      "offline_access",
-      "User.Read",
-      "https://graph.microsoft.com/Mail.Send",
+      'openid',
+      'profile',
+      'email',
+      'offline_access',
+      'User.Read',
+      'https://graph.microsoft.com/Mail.Send',
     ],
-    authUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-    tokenUrl: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
+    authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+    tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
   },
   [MailPlatform.ZOHO]: {
     clientId: process.env.ZOHO_CLIENT_ID!,
     clientSecret: process.env.ZOHO_CLIENT_SECRET!,
     redirectUri: `${clientUrl}/mail-auth/callback`,
     scopes: [
-      "ZohoMail.messages.CREATE",
-      "ZohoMail.accounts.READ",
-      "ZohoMail.accounts.ALL",
-      "aaaserver.profile.READ",
+      'ZohoMail.messages.ALL',
+      'ZohoMail.accounts.READ',
+      'ZohoMail.accounts.ALL',
+      'aaaserver.profile.READ',
     ],
-    authUrl: "https://accounts.zoho.com/oauth/v2/auth",
-    tokenUrl: "https://oauth2.googleapis.com/token",
+    authUrl: 'https://accounts.zoho.com/oauth/v2/auth',
+    tokenUrl: 'https://accounts.zoho.com/oauth/v2/token',
   },
 };
 
@@ -86,16 +89,16 @@ class MailOauthService {
     const params = new URLSearchParams({
       client_id: config.clientId,
       redirect_uri: config.redirectUri,
-      scope: config.scopes.join(" "),
+      scope: config.scopes.join(","),
       response_type: "code",
       prompt: "consent",
       access_type: "offline",
       state: state,
     });
 
-    if (platform === MailPlatform.ZOHO) {
-      params.append("access_type", "offline");
-    }
+    // if (platform === MailPlatform.ZOHO) {
+    //   params.append("access_type", "offline");
+    // }
 
     return { url: `${config.authUrl}?${params.toString()}`, csrfState };
   }
@@ -134,6 +137,7 @@ class MailOauthService {
         accountId: userInfo.id || userInfo.sub,
         accountName: userInfo.name,
         orgId,
+        expiresAt: tokenResponse.expires_in
       };
 
       return result;
@@ -160,70 +164,62 @@ class MailOauthService {
    * @param connection Existing social connection
    * @returns Updated SocialConnection object
    */
-  // async refreshToken(connection: SocialConnection): Promise<SocialConnection> {
-  //   if (!connection.refreshToken) {
-  //     throw new Error("No refresh token available");
-  //   }
+  async refreshToken(connection: IEmailCredential): Promise<IEmailCredential> {
+    if (!connection.refreshToken) {
+      throw new Error("No refresh token available");
+    }
 
-  //   const config = MAIL_CONFIG[connection.platform];
-  //   const refreshToken = decrypt(connection.refreshToken);
-  //   console.log("Refersh Token: ", refreshToken);
+    const config = MAIL_CONFIG[connection.provider];
+    const refreshToken = decrypt(connection.refreshToken);
+    console.log("Refersh Token: ", refreshToken);
 
-  //   let headers: { [key: string]: string } = {
-  //     "Content-Type": "application/x-www-form-urlencoded",
-  //   };
+    let headers: { [key: string]: string } = {
+      "Content-Type": "application/x-www-form-urlencoded",
+    };
 
-  //   const params = new URLSearchParams({
-  //     client_id: config.clientId,
-  //     client_secret: config.clientSecret,
-  //     refresh_token: refreshToken,
-  //     grant_type: "refresh_token",
-  //   });
+    const params = new URLSearchParams({
+      client_id: config.clientId,
+      client_secret: config.clientSecret,
+      refresh_token: refreshToken,
+      grant_type: "refresh_token",
+    });
 
-  //   if (connection.platform === MailPlatform.TWITTER) {
-  //     // Add Basic Auth header for confidential client
-  //     const authHeader = Buffer.from(
-  //       `${config.clientId}:${config.clientSecret}`
-  //     ).toString("base64");
-  //     headers["Authorization"] = `Basic ${authHeader}`;
-  //   }
+    try {
+      const response = await axios.post(config.tokenUrl, params, {
+        headers,
+      });
 
-  //   try {
-  //     const response = await axios.post(config.tokenUrl, params, {
-  //       headers,
-  //     });
+      console.log("Res data: ", response.data);
 
-  //     console.log("Res data: ", response.data);
+      const updatedConnection = await EmailCredential.findOneAndUpdate(
+        { _id: connection._id },
+        {
+          accessToken: encrypt(response.data.access_token),
+          refreshToken: response.data.refresh_token
+            ? encrypt(response.data.refresh_token)
+            : connection.refreshToken,
+          expiresAt: response.data.expires_in
+            ? new Date(Date.now() + response.data.expires_in * 1000)
+            : undefined,
+          updatedAt: new Date(),
+        },
+        { new: true }
+      );
 
-  //     const updatedConnection = await SocialConnectionModel.findOneAndUpdate(
-  //       { _id: connection._id },
-  //       {
-  //         accessToken: encrypt(response.data.access_token),
-  //         refreshToken: response.data.refresh_token
-  //           ? encrypt(response.data.refresh_token)
-  //           : connection.refreshToken,
-  //         expiresAt: response.data.expires_in
-  //           ? new Date(Date.now() + response.data.expires_in * 1000)
-  //           : undefined,
-  //         updatedAt: new Date(),
-  //       },
-  //       { new: true }
-  //     );
+      if (!updatedConnection) {
+        throw new Error("Connection details not updated");
+      }
 
-  //     if (!updatedConnection) {
-  //       throw new Error("Connection details not updated");
-  //     }
-
-  //     return updatedConnection;
-  //   } catch (error: any) {
-  //     console.error(`Error refreshing token for ${connection.platform}:`, {
-  //       error: error.response?.data || error.message,
-  //     });
-  //     throw new Error(
-  //       `Token refresh failed for ${connection.platform}: ${error.message}`
-  //     );
-  //   }
-  // }
+      return updatedConnection;
+    } catch (error: any) {
+      console.error(`Error refreshing token for ${connection.provider}:`, {
+        error: error.response?.data || error.message,
+      });
+      throw new Error(
+        `Token refresh failed for ${connection.provider}: ${error.message}`
+      );
+    }
+  }
 
   /**
    * Exchanges authorization code for access token
