@@ -120,6 +120,7 @@ jobs:
               -p 443:443 \
               -p 6000:6000 \
               -e DOMAIN="${{ secrets.DOMAIN }}" \
+              -e ZOHO_HTTP_EMAIL="${{ secrets.ZOHO_HTTP_EMAIL }}" \
               -e CERTBOT_EMAIL="${{ secrets.CERTBOT_EMAIL }}" \
               -e ACCESS_SECRET="${{ secrets.ACCESS_SECRET }}" \
               -e CLOUDINARY_CLOUD_NAME="${{ secrets.CLOUDINARY_CLOUD_NAME }}" \
