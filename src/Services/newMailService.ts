@@ -661,7 +661,7 @@ if (!zohoCred) throw new Error('Provider credentials not found!');
 let token: TokenRecord = {
 provider: zohoCred.provider,
 email: zohoCred.email,
-providerId: zohoCred.accountId,
+providerId: zohoCred.providerId,
 location: '',
 accessToken: zohoCred.accessToken,
 refreshToken: zohoCred.refreshToken,
