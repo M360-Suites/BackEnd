@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import { Redis } from "ioredis";
+import { redisClient } from "../../../cache/redis";
 
 export abstract class BaseSEOProvider {
   protected client: AxiosInstance;
@@ -16,7 +17,7 @@ export abstract class BaseSEOProvider {
       },
     });
 
-    this.cache = new Redis(process.env.REDIS_URL!);
+    this.cache = redisClient;
     this.providerName = providerName;
 
     this.setupInterceptors();

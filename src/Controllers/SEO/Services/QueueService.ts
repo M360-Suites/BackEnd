@@ -1,12 +1,13 @@
 import Queue from 'bull';
 import Redis from 'ioredis';
+import { redisClient } from '../../../cache/redis';
 
 export class QueueService {
   private redis: Redis;
   private queues: Map<string, Queue.Queue> = new Map();
 
   constructor() {
-    this.redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+    this.redis = redisClient;
     this.initializeQueues();
   }
 

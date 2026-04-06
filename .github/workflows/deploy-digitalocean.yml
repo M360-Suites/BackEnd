@@ -2,7 +2,7 @@ name: Deploy Backend to DigitalOcean Droplet
 
 on:
   push:
-    branches: [ production ]
+    branches: [production]
   workflow_dispatch:
 
 env:
@@ -28,7 +28,7 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm test || true  # Continue even if no tests
+        run: npm test || true # Continue even if no tests
 
       - name: Build TypeScript
         run: npm run build
@@ -59,8 +59,8 @@ jobs:
           host: ${{ secrets.DROPLET_HOST }}
           username: ${{ secrets.DROPLET_USERNAME }}
           key: ${{ secrets.DROPLET_SSH_KEY }}
-          source: "backend-image.tar.gz"
-          target: "/home/${{ secrets.DROPLET_USERNAME }}/"
+          source: 'backend-image.tar.gz'
+          target: '/home/${{ secrets.DROPLET_USERNAME }}/'
           strip_components: 0
 
       - name: Execute deployment on Droplet
@@ -88,30 +88,31 @@ jobs:
             fi
 
             # Create Docker network if it doesn't exist
-            sudo docker network create marketing360-network || true
-            
-            # Stop and remove existing Redis container if running on host
-            sudo systemctl stop redis-server || true
-            sudo systemctl disable redis-server || true
-            
-            # Run Redis container
-            sudo docker run -d \
-              --name redis-container \
-              --restart unless-stopped \
-              --network marketing360-network \
-              -v redis-data:/data \
-              redis:7-alpine \
-              redis-server --appendonly yes
-            
+            sudo docker network create marketing360-network || echo "Network already exists"
+
+            # Check if Redis container is running, if not start it
+            if ! sudo docker ps | grep -q redis-container; then
+              sudo docker run -d \
+                --name redis-container \
+                --restart unless-stopped \
+                --network marketing360-network \
+                -v redis-data:/data \
+                redis:7-alpine \
+                redis-server --appendonly yes
+            else
+              # Ensure Redis is on the correct network
+              sudo docker network connect marketing360-network redis-container || echo "Redis already on network"
+            fi
+
             # Load the Docker image
             sudo docker load < /home/${{ secrets.DROPLET_USERNAME }}/backend-image.tar.gz
             rm /home/${{ secrets.DROPLET_USERNAME }}/backend-image.tar.gz
-            
+
             # Stop and remove existing container
             sudo docker stop ${{ env.DOCKER_CONTAINER_NAME }} || true
             sudo docker rm ${{ env.DOCKER_CONTAINER_NAME }} || true
-            
-            # Run new container
+
+            # Run new container on the same network
             sudo docker run -d \
               --name ${{ env.DOCKER_CONTAINER_NAME }} \
               --restart unless-stopped \
@@ -160,8 +161,8 @@ jobs:
               -e PROD_URL="${{ secrets.PROD_URL }}" \
               -e ZOHO_CLIENT_ID="${{ secrets.ZOHO_CLIENT_ID }}" \
               -e ZOHO_CLIENT_SECRET="${{ secrets.ZOHO_CLIENT_SECRET }}" \
-              -e REDIS_HOST="${{ secrets.REDIS_HOST }}" \
-              -e REDIS_PORT="${{ secrets.REDIS_PORT }}" \
+              -e REDIS_HOST="redis-container" \
+              -e REDIS_PORT="6379" \
               -e ALLOWED_ORIGINS="${{ secrets.ALLOWED_ORIGINS }}" \
               -e DISCORD_CLIENT_ID="${{ secrets.DISCORD_CLIENT_ID }}" \
               -e DISCORD_CLIENT_SECRET="${{ secrets.DISCORD_CLIENT_SECRET }}" \
@@ -203,14 +204,16 @@ jobs:
               -e SEO_TOOLKIT_DOLLAR="${{ secrets.SEO_TOOLKIT_DOLLAR }}" \
               -e BASE_PLAN_AMOUNT="${{ secrets.BASE_PLAN_AMOUNT }}" \
               ${{ env.DOCKER_IMAGE_NAME }}:latest
-            
+
             # Optional: Cleanup
             sudo docker system prune -af
             sudo docker image prune -f
-            
+
             # Check if container is running
             if sudo docker ps | grep -q ${{ env.DOCKER_CONTAINER_NAME }}; then
               echo "✅ Deployment successful! Container is running."
+              # Test Redis connectivity from backend container
+              sudo docker exec ${{ env.DOCKER_CONTAINER_NAME }} node -e "const Redis = require('ioredis'); const redis = new Redis({host: 'redis-container', port: 6379}); redis.ping().then(result => console.log('Redis connection test:', result)).catch(err => console.error('Redis connection failed:', err.message));"
             else
               echo "❌ Deployment failed! Container is not running."
               sudo docker logs ${{ env.DOCKER_CONTAINER_NAME }} --tail 50

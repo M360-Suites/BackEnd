@@ -7,8 +7,8 @@ import { promisify } from 'util';
 import path from 'path';
 import { logger } from '../logger/logger';
 import { decrypt } from './encryption';
-import { EmailCredential } from "../Models/Campaign";
-import { MailPlatform } from "../Controllers/EmailAutomation/Auth/MailOauth";
+import { EmailCredential } from '../Models/Campaign';
+import { MailPlatform } from '../Controllers/EmailAutomation/Auth/MailOauth';
 
 const readFileAsync = promisify(fs.readFile);
 
@@ -656,16 +656,16 @@ class UnifiedMailService {
     mailSender: string,
   ): Promise<any> {
     const email = process.env.ZOHO_HTTP_EMAIL!;
-const zohoCred = await EmailCredential.findOne({ email, provider: MailPlatform.ZOHO });
-if (!zohoCred) throw new Error('Provider credentials not found!');
-let token: TokenRecord = {
-provider: zohoCred.provider,
-email: zohoCred.email,
-providerId: zohoCred.providerId,
-location: '',
-accessToken: zohoCred.accessToken,
-refreshToken: zohoCred.refreshToken,
-};
+    const zohoCred = await EmailCredential.findOne({ email, provider: MailPlatform.ZOHO });
+    if (!zohoCred) throw new Error('Provider credentials not found!');
+    let token: TokenRecord = {
+      provider: zohoCred.provider,
+      email: zohoCred.email,
+      providerId: zohoCred.providerId,
+      location: '',
+      accessToken: zohoCred.accessToken,
+      refreshToken: zohoCred.refreshToken,
+    };
 
     return this.sendEmail(token, {
       to: mailRecipient,
