@@ -213,7 +213,7 @@ jobs:
             if sudo docker ps | grep -q ${{ env.DOCKER_CONTAINER_NAME }}; then
               echo "✅ Deployment successful! Container is running."
               # Test Redis connectivity from backend container
-              sudo docker exec ${{ env.DOCKER_CONTAINER_NAME }} node -e "const Redis = require('ioredis'); const redis = new Redis({host: 'redis-container', port: 6379}); redis.ping().then(result => console.log('Redis connection test:', result)).catch(err => console.error('Redis connection failed:', err.message));"
+              # sudo docker exec ${{ env.DOCKER_CONTAINER_NAME }} node -e "const Redis = require('ioredis'); const redis = new Redis({host: 'redis-container', port: 6379}); redis.ping().then(result => console.log('Redis connection test:', result)).catch(err => console.error('Redis connection failed:', err.message));"
             else
               echo "❌ Deployment failed! Container is not running."
               sudo docker logs ${{ env.DOCKER_CONTAINER_NAME }} --tail 50
@@ -221,7 +221,7 @@ jobs:
             fi
 
             # Verify deployment
-            sleep 10
+            sleep 30
             if curl -f -k https://${{ secrets.DOMAIN }}/health; then
               echo "✅ Health check passed"
             else
