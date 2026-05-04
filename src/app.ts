@@ -7,6 +7,7 @@ import { config } from 'dotenv';
 import http from 'http';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import session from 'express-session';
 import corsOptions from './config/cors';
 import connectToDatabase from './config/db';
 import pinoHttp from 'pino-http';
@@ -64,6 +65,18 @@ app.use(httpLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(
+  session({
+    secret: process.env.SITE_KEY!,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+    },
+  }),
+);
 app.use(passport.initialize());
 app.use(passport.session());
 
