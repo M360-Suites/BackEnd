@@ -31,7 +31,7 @@ route.post('/auth/provider', detectProvider as CustomRequestHandler);
 route.post('/auth/refresh', refreshAccessToken as CustomRequestHandler);
 route.delete(
   '/auth/logout',
-  authMiddleware as CustomRequestHandler,
+  // authMiddleware as CustomRequestHandler,
   logout as CustomRequestHandler,
 );
 

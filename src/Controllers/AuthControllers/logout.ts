@@ -12,9 +12,9 @@ export const logout = asyncHandler(async (req: CustomRequest, res: Response) => 
     };
 
     // Passport logout guard
-    if (typeof (req as any).logout === 'function') {
-      (req as any).logout();
-    }
+    // if (typeof (req as any).logout === 'function') {
+    //   (req as any).logout();
+    // }
 
     // Clear refresh token cookie
     res.clearCookie('rfst_tkn', cookieOptions);
