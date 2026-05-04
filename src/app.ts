@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import { config } from 'dotenv';
 import http from 'http';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import corsOptions from './config/cors';
 import connectToDatabase from './config/db';
 import pinoHttp from 'pino-http';
@@ -15,8 +16,6 @@ import { useSocket } from './Services/websocket';
 import passport from 'passport';
 import rateLimit from 'express-rate-limit';
 import { resSender } from './Services/responseService';
-import session from 'express-session';
-import { CipherKey } from 'crypto';
 import { startTrialExpirationJob } from './jobs/trialExpirationJob';
 import { startGraceExpiredJob } from './jobs/graceExpiredJob';
 import './config/passport/google';
@@ -24,6 +23,7 @@ import './config/passport/microsoft';
 
 // Database Backup
 import './Services/dbBackup';
+import helmetConfig from './config/helmet';
 
 // Load environment variables
 config();
@@ -58,29 +58,23 @@ initMonitoring(app);
 
 // Middlewares
 app.use(cors(corsOptions));
-app.use(helmet());
+app.use(helmet(helmetConfig));
 app.use(morgan('dev'));
 app.use(httpLogger);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(
-  session({
-    secret: process.env.SITE_KEY as CipherKey,
-    resave: false,
-    saveUninitialized: true,
-  }),
-);
+app.use(cookieParser());
 app.use(passport.initialize());
 app.use(passport.session());
 
 // Health check route
-app.get('/health', (req, res) => {
+app.get('/api/health', (req, res) => {
   let timestamp = new Date().toISOString();
   resSender(res, 200, 'success', 'Health check route is working!', null, timestamp);
 });
 
 // Test route
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   return resSender(res, 200, 'success', 'Root Test route is working!');
 });
 app.get('/tiktok5JMKIPJ6j5e7Tqgw3TmMrG0vPL8Uz4mP.txt', (req, res) => {
@@ -89,6 +83,11 @@ app.get('/tiktok5JMKIPJ6j5e7Tqgw3TmMrG0vPL8Uz4mP.txt', (req, res) => {
 });
 app.get('/api/test', (req, res) => {
   return resSender(res, 200, 'success', 'Test route is working!');
+});
+
+app.get('/api/v1/docs', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'docs.html');
+  res.sendFile(filePath);
 });
 
 // Api Routes
@@ -150,7 +149,8 @@ connectToDatabase()
     startGraceExpiredJob();
 
     server.listen(PORT, () => {
-      logger.info(`Server running on port ${PORT}`);
+      logger.info(`⚡️[server]: Server running on port http://localhost:${PORT}`);
+      logger.info(`📚 API Docs available at http://localhost:${PORT}/api/v1/docs`);
     });
   })
   .catch((err) => {

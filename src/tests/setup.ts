@@ -9,7 +9,7 @@ config({ path: '.env.test' });
 beforeAll(async () => {
   // Use a test database
   const testDbUri = process.env.TEST_MONGODB_URI || 'mongodb://localhost:27017/m360_test';
-  await mongoose.connect(testDbUri);
+  await mongoose.connect(testDbUri, { dbName: 'deploy_test' });
 });
 
 afterAll(async () => {

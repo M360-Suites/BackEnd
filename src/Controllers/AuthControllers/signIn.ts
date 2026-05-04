@@ -45,10 +45,10 @@ export const signIn = async (req: CustomRequest, res: Response) => {
 
     const [accessToken, refreshToken] = await Promise.all([
       generateToken(payload, jwtAccess, {
-        expiresIn: '30d',
+        expiresIn: '10m',
       }),
       generateToken(payload, jwtRefresh as string, {
-        expiresIn: '30d',
+        expiresIn: '7d',
       }),
     ]);
 

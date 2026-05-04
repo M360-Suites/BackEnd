@@ -17,7 +17,7 @@ async function connectToDatabase(): Promise<typeof mongoose> {
   }
 
   try {
-    const db = await mongoose.connect(dbUri);
+    const db = await mongoose.connect(dbUri, { dbName: 'production' });
     cachedDb = db;
     logger.info('Connected to MongoDB');
     return db;

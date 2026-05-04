@@ -3,7 +3,7 @@ dist/
 backups/
 .env
 .env.copy
-.env.test
+# .env.test
 *.log
 .DS_Store
 .husky

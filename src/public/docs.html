@@ -1,0 +1,1799 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>M360 Backend API Documentation</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4/swagger-ui.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      #swagger-ui {
+        width: 100%;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="swagger-ui"></div>
+
+    <script src="https://unpkg.com/swagger-ui-dist@4/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@4/swagger-ui-standalone-preset.js"></script>
+    <script>
+      const openapiSpec = {
+        openapi: '3.0.3',
+        info: {
+          title: 'M360 Backend API',
+          version: '1.0.0',
+          description: 'Auto-generated OpenAPI 3.0 documentation for the M360 Backend service.',
+          contact: {
+            name: 'M360 Backend Team',
+            email: 'support@example.com',
+          },
+        },
+        servers: [
+              {
+                url: 'http://localhost:5001/api',
+                description: 'Development server',
+              },
+              {
+                url: 'https://server.biz360prime.com/api',
+                description: 'Live Production server',
+              },
+            ],
+        components: {
+          securitySchemes: {
+            bearerAuth: {
+              type: 'http',
+              scheme: 'bearer',
+              bearerFormat: 'JWT',
+            },
+          },
+          schemas: {
+            ErrorResponse: {
+              type: 'object',
+              properties: {
+                status: { type: 'string', example: 'error' },
+                message: { type: 'string', example: 'Route not found!' },
+                data: { nullable: true, type: ['object', 'null'] },
+              },
+            },
+            AuthUser: {
+              type: 'object',
+              properties: {
+                email: { type: 'string', format: 'email' },
+                password: { type: 'string', format: 'password' },
+              },
+              required: ['email', 'password'],
+            },
+            SignupRequest: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                email: { type: 'string', format: 'email' },
+                password: { type: 'string', format: 'password' },
+                organizationName: { type: 'string' },
+              },
+              required: ['name', 'email', 'password'],
+            },
+            TrialRequest: {
+              type: 'object',
+              properties: {
+                email: { type: 'string', format: 'email' },
+                plan: { type: 'string', example: 'starter' },
+              },
+            },
+            CodeVerification: {
+              type: 'object',
+              properties: {
+                email: { type: 'string', format: 'email' },
+                code: { type: 'string' },
+              },
+              required: ['email', 'code'],
+            },
+            ResetPassword: {
+              type: 'object',
+              properties: {
+                email: { type: 'string', format: 'email' },
+                code: { type: 'string' },
+                password: { type: 'string', format: 'password' },
+              },
+              required: ['email', 'code', 'password'],
+            },
+            PaymentCaptureRequest: {
+              type: 'object',
+              properties: {
+                amount: { type: 'number', example: 5000 },
+                currency: { type: 'string', example: 'NGN' },
+                email: { type: 'string', format: 'email' },
+              },
+              required: ['amount', 'currency', 'email'],
+            },
+            PaymentSubscribeRequest: {
+              type: 'object',
+              properties: {
+                planId: { type: 'string' },
+                organizationId: { type: 'string' },
+              },
+              required: ['planId', 'organizationId'],
+            },
+            CampaignCreateRequest: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                subject: { type: 'string' },
+                schedule: { type: 'string', format: 'date-time' },
+                listIds: { type: 'array', items: { type: 'string' } },
+                content: { type: 'string' },
+              },
+              required: ['name', 'subject', 'content'],
+            },
+            MediaUploadResponse: {
+              type: 'object',
+              properties: {
+                id: { type: 'string' },
+                url: { type: 'string', format: 'uri' },
+                filename: { type: 'string' },
+              },
+            },
+            WebsiteRequest: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                ownerId: { type: 'string' },
+                templateId: { type: 'string' },
+                domain: { type: 'string' },
+                settings: { type: 'object' },
+              },
+              required: ['name'],
+            },
+            PageRequest: {
+              type: 'object',
+              properties: {
+                title: { type: 'string' },
+                slug: { type: 'string' },
+                websiteId: { type: 'string' },
+                content: { type: 'string' },
+                published: { type: 'boolean' },
+              },
+              required: ['title', 'websiteId'],
+            },
+            SettingsRequest: {
+              type: 'object',
+              properties: {
+                general: { type: 'object' },
+                notifications: { type: 'object' },
+                domain: { type: 'object' },
+                email: { type: 'object' },
+                ads: { type: 'object' },
+                community: { type: 'object' },
+                security: { type: 'object' },
+              },
+            },
+            SubscriberRequest: {
+              type: 'object',
+              properties: {
+                contacts: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      email: { type: 'string', format: 'email' },
+                      name: { type: 'string' },
+                    },
+                  },
+                },
+              },
+            },
+            OrganizationRequest: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                ownerId: { type: 'string' },
+                email: { type: 'string', format: 'email' },
+              },
+              required: ['name', 'email'],
+            },
+            CommunityMessageRequest: {
+              type: 'object',
+              properties: {
+                to: { type: 'string' },
+                message: { type: 'string' },
+              },
+              required: ['to', 'message'],
+            },
+            AdCreateRequest: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                objective: { type: 'string' },
+                budget: { type: 'number' },
+                status: { type: 'string' },
+              },
+              required: ['name', 'objective'],
+            },
+            AudienceCreateRequest: {
+              type: 'object',
+              properties: {
+                name: { type: 'string' },
+                description: { type: 'string' },
+                targeting: { type: 'object' },
+              },
+              required: ['name'],
+            },
+          },
+        },
+        security: [],
+        paths: {
+          '/health': {
+            get: {
+              summary: 'Health check',
+              tags: ['Checks'],
+              description: 'Returns a status confirming the server is running.',
+              responses: {
+                200: { description: 'OK' },
+              },
+            },
+          },
+          '/': {
+            get: {
+              summary: 'Root test route',
+              tags: ['Checks'],
+              responses: {
+                200: { description: 'OK' },
+              },
+            },
+          },
+          '/api/test': {
+            get: {
+              summary: 'API test route',
+              tags: ['Checks'],
+              responses: {
+                200: { description: 'OK' },
+              },
+            },
+          },
+          '/auth/trial': {
+            post: {
+              summary: 'Start free trial',
+              tags: ['Authentication'],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': { schema: { $ref: '#/components/schemas/TrialRequest' } },
+                },
+              },
+              responses: {
+                200: { description: 'Trial started successfully' },
+              },
+            },
+          },
+          '/auth/signup': {
+            post: {
+              summary: 'Register a new user',
+              tags: ['Authentication'],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': { schema: { $ref: '#/components/schemas/SignupRequest' } },
+                },
+              },
+              responses: { 201: { description: 'User created' } },
+            },
+          },
+          '/auth/signin': {
+            post: {
+              summary: 'User sign in',
+              tags: ['Authentication'],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': { schema: { $ref: '#/components/schemas/AuthUser' } },
+                },
+              },
+              responses: { 200: { description: 'Authentication successful' } },
+            },
+          },
+          '/auth/google': {
+            get: {
+              summary: 'Initiate Google OAuth sign-in',
+              tags: ['Authentication'],
+              responses: { 302: { description: 'Redirect to Google OAuth' } },
+            },
+          },
+          '/auth/google/callback': {
+            get: {
+              summary: 'Google OAuth callback',
+              tags: ['Authentication'],
+              responses: { 200: { description: 'OAuth callback handled' } },
+            },
+          },
+          '/auth/verify-code': {
+            post: {
+              summary: 'Verify code for password reset or verification flows',
+              tags: ['Authentication'],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': { schema: { $ref: '#/components/schemas/CodeVerification' } },
+                },
+              },
+              responses: { 200: { description: 'Code verification successful' } },
+            },
+          },
+          '/auth/sendCode': {
+            post: {
+              summary: 'Send verification or reset code to email',
+              tags: ['Authentication'],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: { email: { type: 'string', format: 'email' } },
+                      required: ['email'],
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Code sent' } },
+            },
+          },
+          '/auth/reset-password': {
+            post: {
+              summary: 'Reset user password',
+              tags: ['Authentication'],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': { schema: { $ref: '#/components/schemas/ResetPassword' } },
+                },
+              },
+              responses: { 200: { description: 'Password reset successful' } },
+            },
+          },
+          '/auth/provider': {
+            post: {
+              summary: 'Detect authentication provider from credentials',
+              tags: ['Email Automation'],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        email: { type: 'string', format: 'email' },
+                        provider: { type: 'string' },
+                      },
+                      required: ['email'],
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Provider detected' } },
+            },
+          },
+          '/auth/logout': {
+            delete: {
+              summary: 'Log out current user',
+              tags: ['Authentication'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Logged out' } },
+            },
+          },
+          '/payment/capture-card': {
+            post: {
+              summary: 'Initialize card capture via Paystack',
+              tags: ['Payment'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: { $ref: '#/components/schemas/PaymentCaptureRequest' },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Capture initialized' } },
+            },
+          },
+          '/payment/capture-card/complete': {
+            post: {
+              summary: 'Complete Paystack card capture flow',
+              tags: ['Payment'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        reference: { type: 'string' },
+                        email: { type: 'string', format: 'email' },
+                      },
+                      required: ['reference'],
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Capture completed' } },
+            },
+          },
+          '/payment/status/{organizationId}': {
+            get: {
+              summary: 'Get billing status for an organization',
+              tags: ['Payment'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'organizationId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Billing status returned' } },
+            },
+          },
+          '/payment/subscribe': {
+            post: {
+              summary: 'Convert trial to subscription',
+              tags: ['Payment'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: { $ref: '#/components/schemas/PaymentSubscribeRequest' },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Subscription created' } },
+            },
+          },
+          '/payment/upgrade': {
+            post: {
+              summary: 'Upgrade subscription or features',
+              tags: ['Payment'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: false,
+                content: {
+                  'application/json': {
+                    schema: { type: 'object', properties: { planId: { type: 'string' } } },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Upgrade requested' } },
+            },
+          },
+          '/payment/downgrade': {
+            post: {
+              summary: 'Downgrade subscription or features',
+              tags: ['Payment'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: false,
+                content: {
+                  'application/json': {
+                    schema: { type: 'object', properties: { planId: { type: 'string' } } },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Downgrade requested' } },
+            },
+          },
+          '/payment/webhooks/paystack': {
+            post: {
+              summary: 'Paystack webhook endpoint',
+              tags: ['Payment'],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': { schema: { type: 'object' } },
+                },
+              },
+              responses: { 200: { description: 'Webhook received' } },
+            },
+          },
+          '/campaigns': {
+            post: {
+              summary: 'Create a marketing campaign',
+              tags: ['Email Automation'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: { $ref: '#/components/schemas/CampaignCreateRequest' },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Campaign created' } },
+            },
+            get: {
+              summary: 'Fetch all campaigns',
+              tags: ['Email Automation'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Campaigns returned' } },
+            },
+            delete: {
+              summary: 'Delete campaigns',
+              tags: ['Email Automation'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Campaigns deleted' } },
+            },
+          },
+          '/campaigns/dashboard': {
+            get: {
+              summary: 'Get campaign dashboard data',
+              tags: ['Email Automation'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Dashboard data returned' } },
+            },
+          },
+          '/campaigns/auth/{platform}': {
+            get: {
+              summary: 'Get campaign auth URL for a platform',
+              tags: ['Email Automation - Auth'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Auth URL returned' } },
+            },
+          },
+          '/campaigns/callback': {
+            get: {
+              summary: 'Campaign provider callback',
+              tags: ['Email Automation - Auth'],
+              responses: { 200: { description: 'Callback handled' } },
+            },
+          },
+          '/campaigns/custom': {
+            post: {
+              summary: 'Authenticate with a custom provider',
+              tags: ['Email Automation - Auth'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: false,
+                content: { 'application/json': { schema: { type: 'object' } } },
+              },
+              responses: { 200: { description: 'Custom auth started' } },
+            },
+          },
+          '/comm/auth/{platform}': {
+            get: {
+              summary: 'Connect a community platform',
+              tags: ['Community Management - Auth'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Platform connect initiated' } },
+            },
+          },
+          '/comm/callback': {
+            get: {
+              summary: 'Community platform OAuth callback',
+              tags: ['Community Management - Auth'],
+              responses: { 200: { description: 'Callback processed' } },
+            },
+          },
+          '/comm/platforms': {
+            get: {
+              summary: 'List connected community platforms',
+              tags: ['Community Management'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Connected platforms returned' } },
+            },
+          },
+          '/comm/{connectionId}': {
+            delete: {
+              summary: 'Disconnect a community platform',
+              tags: ['Community Management'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'connectionId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Platform disconnected' } },
+            },
+          },
+          '/comm/communities': {
+            get: {
+              summary: 'List connected communities',
+              tags: ['Community Management'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Communities returned' } },
+            },
+            post: {
+              summary: 'Sync communities from platform',
+              tags: ['Community Management'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Community sync started' } },
+            },
+          },
+          '/comm/communities/{communityId}': {
+            get: {
+              summary: 'Get community details',
+              tags: ['Community Management'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'communityId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Community details returned' } },
+            },
+          },
+          '/comm/communities/{communityId}/members': {
+            get: {
+              summary: 'List community members',
+              tags: ['Community Management'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'communityId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Members returned' } },
+            },
+          },
+          '/comm/posts': {
+            post: {
+              summary: 'Create a community post',
+              tags: ['Community Management'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        title: { type: 'string' },
+                        body: { type: 'string' },
+                        communityId: { type: 'string' },
+                      },
+                      required: ['title', 'body'],
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Post created' } },
+            },
+            get: {
+              summary: 'Fetch community posts',
+              tags: ['Community Management'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Posts returned' } },
+            },
+          },
+          '/comm/posts/{postId}': {
+            put: {
+              summary: 'Update a community post',
+              tags: ['Community Management'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'postId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: { title: { type: 'string' }, body: { type: 'string' } },
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Post updated' } },
+            },
+            delete: {
+              summary: 'Delete a community post',
+              tags: ['Community Management'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'postId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Post deleted' } },
+            },
+          },
+          '/comm/whatsapp/send-message': {
+            post: {
+              summary: 'Send a WhatsApp message',
+              tags: ['Community Management'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: { $ref: '#/components/schemas/CommunityMessageRequest' },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Message sent' } },
+            },
+          },
+          '/comm/whatsapp/{connectionId}/profile': {
+            get: {
+              summary: 'Get WhatsApp business profile',
+              tags: ['Community Management'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'connectionId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Profile data returned' } },
+            },
+          },
+          '/comm/webhooks/whatsapp': {
+            get: {
+              summary: 'Verify WhatsApp webhook subscription',
+              tags: ['Community Management'],
+              responses: { 200: { description: 'Webhook verification response' } },
+            },
+            post: {
+              summary: 'Handle incoming WhatsApp webhook events',
+              tags: ['Community Management'],
+              requestBody: {
+                required: true,
+                content: { 'application/json': { schema: { type: 'object' } } },
+              },
+              responses: { 200: { description: 'Webhook event processed' } },
+            },
+          },
+          '/media/': {
+            post: {
+              summary: 'Upload media files',
+              tags: ['Media'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'multipart/form-data': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        files: { type: 'array', items: { type: 'string', format: 'binary' } },
+                      },
+                    },
+                    required: ['files'],
+                  },
+                },
+              },
+              responses: {
+                200: {
+                  description: 'Files uploaded',
+                  content: {
+                    'application/json': {
+                      schema: { $ref: '#/components/schemas/MediaUploadResponse' },
+                    },
+                  },
+                },
+              },
+            },
+            get: {
+              summary: 'List uploaded media items',
+              tags: ['Media'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Media list returned' } },
+            },
+          },
+          '/media/{id}': {
+            get: {
+              summary: 'Get media item by ID',
+              tags: ['Media'],
+              security: [{ bearerAuth: [] }],
+              parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+              responses: { 200: { description: 'Media item returned' } },
+            },
+            put: {
+              summary: 'Update media metadata',
+              tags: ['Media'],
+              security: [{ bearerAuth: [] }],
+              parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: { title: { type: 'string' }, description: { type: 'string' } },
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Media updated' } },
+            },
+            delete: {
+              summary: 'Delete media item',
+              tags: ['Media'],
+              security: [{ bearerAuth: [] }],
+              parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+              responses: { 200: { description: 'Media deleted' } },
+            },
+          },
+          '/organization/invite': {
+            get: {
+              summary: 'Fetch organization invitation details',
+              tags: ['Organization'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Invitation fetched' } },
+            },
+          },
+          '/organization': {
+            post: {
+              summary: 'Create a new organization account',
+              tags: ['Organization'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: { $ref: '#/components/schemas/OrganizationRequest' },
+                  },
+                },
+              },
+              responses: { 201: { description: 'Organization created' } },
+            },
+            put: {
+              summary: 'Invite a user to an organization',
+              tags: ['Organization'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        email: { type: 'string', format: 'email' },
+                        role: { type: 'string' },
+                        organizationId: { type: 'string' },
+                      },
+                      required: ['email', 'organizationId'],
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Invitation sent' } },
+            },
+          },
+          '/organization/accept': {
+            put: {
+              summary: 'Accept an organization invitation',
+              tags: ['Organization'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: { invitationToken: { type: 'string' } },
+                      required: ['invitationToken'],
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Invite accepted' } },
+            },
+          },
+        //   '/page/': {
+        //     post: {
+        //       summary: 'Create a new page',
+        //       security: [{ bearerAuth: [] }],
+        //       requestBody: {
+        //         required: true,
+        //         content: {
+        //           'application/json': { schema: { $ref: '#/components/schemas/PageRequest' } },
+        //         },
+        //       },
+        //       responses: { 201: { description: 'Page created' } },
+        //     },
+        //   },
+        //   '/page/{id}': {
+        //     get: {
+        //       summary: 'Fetch a page by ID or slug',
+        //       security: [{ bearerAuth: [] }],
+        //       parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        //       responses: { 200: { description: 'Page returned' } },
+        //     },
+        //     put: {
+        //       summary: 'Update a page',
+        //       security: [{ bearerAuth: [] }],
+        //       parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        //       requestBody: {
+        //         required: true,
+        //         content: {
+        //           'application/json': { schema: { $ref: '#/components/schemas/PageRequest' } },
+        //         },
+        //       },
+        //       responses: { 200: { description: 'Page updated' } },
+        //     },
+        //     delete: {
+        //       summary: 'Delete a page',
+        //       security: [{ bearerAuth: [] }],
+        //       parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        //       responses: { 200: { description: 'Page deleted' } },
+        //     },
+        //   },
+        //   '/{websiteId}/pages/': {
+        //     get: {
+        //       summary: 'List pages for a website',
+        //       security: [{ bearerAuth: [] }],
+        //       parameters: [
+        //         { name: 'websiteId', in: 'path', required: true, schema: { type: 'string' } },
+        //       ],
+        //       responses: { 200: { description: 'Page list returned' } },
+        //     },
+        //   },
+        //   '/page/{id}/publish': {
+        //     post: {
+        //       summary: 'Publish a page',
+        //       security: [{ bearerAuth: [] }],
+        //       parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        //       responses: { 200: { description: 'Page published' } },
+        //     },
+        //   },
+          '/settings': {
+            get: {
+              summary: 'Fetch all application settings',
+              tags: ['Settings'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Settings fetched' } },
+            },
+            post: {
+              summary: 'Save multiple settings at once',
+              tags: ['Settings'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': { schema: { $ref: '#/components/schemas/SettingsRequest' } },
+                },
+              },
+              responses: { 200: { description: 'Settings saved' } },
+            },
+          },
+          '/settings/general': {
+            post: {
+              summary: 'Save general settings',
+              tags: ['Settings'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: { 'application/json': { schema: { type: 'object' } } },
+              },
+              responses: { 200: { description: 'General settings saved' } },
+            },
+          },
+          '/settings/profile': {
+            post: {
+              summary: 'Update user profile settings',
+              tags: ['Settings'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: { 'application/json': { schema: { type: 'object' } } },
+              },
+              responses: { 200: { description: 'Profile updated' } },
+            },
+          },
+          '/settings/notifications': {
+            post: {
+              summary: 'Save notification settings',
+              tags: ['Settings'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: { 'application/json': { schema: { type: 'object' } } },
+              },
+              responses: { 200: { description: 'Notifications settings saved' } },
+            },
+          },
+          '/settings/domain': {
+            post: {
+              summary: 'Save domain settings',
+              tags: ['Settings'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: { 'application/json': { schema: { type: 'object' } } },
+              },
+              responses: { 200: { description: 'Domain saved' } },
+            },
+          },
+          '/settings/email': {
+            post: {
+              summary: 'Save email settings',
+              tags: ['Settings'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: { 'application/json': { schema: { type: 'object' } } },
+              },
+              responses: { 200: { description: 'Email settings saved' } },
+            },
+          },
+          '/settings/ads': {
+            post: {
+              summary: 'Save ads settings',
+              tags: ['Settings'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: { 'application/json': { schema: { type: 'object' } } },
+              },
+              responses: { 200: { description: 'Ads settings saved' } },
+            },
+          },
+          '/settings/community': {
+            post: {
+              summary: 'Save community settings',
+              tags: ['Settings'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: { 'application/json': { schema: { type: 'object' } } },
+              },
+              responses: { 200: { description: 'Community settings saved' } },
+            },
+          },
+          '/settings/security': {
+            post: {
+              summary: 'Save security settings',
+              tags: ['Settings'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: { 'application/json': { schema: { type: 'object' } } },
+              },
+              responses: { 200: { description: 'Security settings saved' } },
+            },
+          },
+          '/security/ads/{accountId}': {
+            delete: {
+              summary: 'Remove a connected ads account',
+              tags: ['Settings'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Ads account removed' } },
+            },
+          },
+          '/security/social/{accountId}': {
+            delete: {
+              summary: 'Remove a connected social account',
+              tags: ['Settings'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Social account removed' } },
+            },
+          },
+          '/security/community/{accountId}': {
+            delete: {
+              summary: 'Remove a connected community account',
+              tags: ['Settings'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Community account removed' } },
+            },
+          },
+          '/socials/auth/{platform}': {
+            get: {
+              summary: 'Start social auth for a platform',
+              tags: ['Social Scheduler'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 302: { description: 'Redirect to platform auth' } },
+            },
+          },
+          '/socials/callback': {
+            get: {
+              summary: 'Social platform callback',
+              tags: ['Social Scheduler'],
+              responses: { 200: { description: 'Callback returned' } },
+            },
+          },
+          '/socials/post/{platform}': {
+            post: {
+              summary: 'Create a social post with optional files',
+              tags: ['Social Scheduler'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              requestBody: {
+                required: true,
+                content: {
+                  'multipart/form-data': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        caption: { type: 'string' },
+                        files: { type: 'array', items: { type: 'string', format: 'binary' } },
+                      },
+                      required: ['caption'],
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Post created' } },
+            },
+          },
+          '/socials/broadcast': {
+            post: {
+              summary: 'Create a broadcast social post',
+              tags: ['Social Scheduler'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'multipart/form-data': {
+                    schema: {
+                      type: 'object',
+                      properties: {
+                        caption: { type: 'string' },
+                        files: { type: 'array', items: { type: 'string', format: 'binary' } },
+                      },
+                      required: ['caption'],
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Broadcast created' } },
+            },
+          },
+          '/socials/posts': {
+            get: {
+              summary: 'Fetch social posts',
+              tags: ['Social Scheduler'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Social posts returned' } },
+            },
+          },
+          '/subscribers': {
+            get: {
+              summary: 'Fetch all subscribers',
+              tags: ['Email Subscribers'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Subscribers returned' } },
+            },
+            post: {
+              summary: 'Add subscribers via file upload',
+              tags: ['Email Subscribers'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'multipart/form-data': {
+                    schema: {
+                      type: 'object',
+                      properties: { file: { type: 'string', format: 'binary' } },
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Subscribers added' } },
+            },
+            delete: {
+              summary: 'Remove contacts from subscribers',
+              tags: ['Email Subscribers'],
+              security: [{ bearerAuth: [] }],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: { ids: { type: 'array', items: { type: 'string' } } },
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Subscribers removed' } },
+            },
+          },
+        //   '/website/': {
+        //     post: {
+        //       summary: 'Create a new website',
+        //       security: [{ bearerAuth: [] }],
+        //       requestBody: {
+        //         required: true,
+        //         content: {
+        //           'application/json': { schema: { $ref: '#/components/schemas/WebsiteRequest' } },
+        //         },
+        //       },
+        //       responses: { 201: { description: 'Website created' } },
+        //     },
+        //   },
+        //   '/website/{id}': {
+        //     get: {
+        //       summary: 'Get website by ID',
+        //       security: [{ bearerAuth: [] }],
+        //       parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        //       responses: { 200: { description: 'Website returned' } },
+        //     },
+        //     put: {
+        //       summary: 'Update website details',
+        //       security: [{ bearerAuth: [] }],
+        //       parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        //       requestBody: {
+        //         required: true,
+        //         content: {
+        //           'application/json': { schema: { $ref: '#/components/schemas/WebsiteRequest' } },
+        //         },
+        //       },
+        //       responses: { 200: { description: 'Website updated' } },
+        //     },
+        //     delete: {
+        //       summary: 'Delete a website',
+        //       security: [{ bearerAuth: [] }],
+        //       parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        //       responses: { 200: { description: 'Website deleted' } },
+        //     },
+        //   },
+        //   '/websites': {
+        //     get: {
+        //       summary: 'List all websites',
+        //       security: [{ bearerAuth: [] }],
+        //       responses: { 200: { description: 'Websites returned' } },
+        //     },
+        //   },
+        //   '/website/{id}/publish': {
+        //     put: {
+        //       summary: 'Publish a website',
+        //       security: [{ bearerAuth: [] }],
+        //       parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+        //       responses: { 200: { description: 'Website published' } },
+        //     },
+        //   },
+          '/ads/oauth/{platform}': {
+            get: {
+              summary: 'Connect to an ads platform',
+              tags: ['Ads Manager - Account'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 302: { description: 'Redirect to ads OAuth' } },
+            },
+          },
+          '/ads/auth/callback': {
+            get: {
+              summary: 'Ads OAuth callback endpoint',
+              tags: ['Ads Manager - Account'],
+              responses: { 200: { description: 'Callback handled' } },
+            },
+          },
+          '/ads/oauth/{platform}/disconnect': {
+            delete: {
+              summary: 'Disconnect a connected ads platform',
+              tags: ['Ads Manager - Account'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Platform disconnected' } },
+            },
+          },
+          '/ads/accounts/{platform}': {
+            get: {
+              summary: 'Get all ads accounts for a platform',
+              tags: ['Ads Manager - Account'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Ad accounts returned' } },
+            },
+          },
+          '/ads/accounts/{platform}/{accountId}': {
+            get: {
+              summary: 'Get details of a specific ads account',
+              tags: ['Ads Manager - Account'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Account details returned' } },
+            },
+          },
+          '/ads/campaigns/{platform}/{accountId}': {
+            get: {
+              summary: 'List ad campaigns in an account',
+              tags: ['Ads Manager - Campaign'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Campaigns returned' } },
+            },
+            post: {
+              summary: 'Create a new ad campaign',
+              tags: ['Ads Manager - Campaign'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': { schema: { $ref: '#/components/schemas/AdCreateRequest' } },
+                },
+              },
+              responses: { 200: { description: 'Campaign created' } },
+            },
+          },
+          '/ads/campaigns/{platform}/{accountId}/{campaignId}': {
+            get: {
+              summary: 'Get campaign details',
+              tags: ['Ads Manager - Campaign'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'campaignId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Campaign details returned' } },
+            },
+            put: {
+              summary: 'Update an ad campaign',
+              tags: ['Ads Manager - Campaign'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'campaignId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': { schema: { $ref: '#/components/schemas/AdCreateRequest' } },
+                },
+              },
+              responses: { 200: { description: 'Campaign updated' } },
+            },
+            delete: {
+              summary: 'Delete a campaign',
+              tags: ['Ads Manager - Campaign'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'campaignId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Campaign deleted' } },
+            },
+          },
+          '/ads/campaigns/{platform}/{accountId}/{campaignId}/status': {
+            patch: {
+              summary: 'Update campaign status',
+              tags: ['Ads Manager - Campaign'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'campaignId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: { status: { type: 'string' } },
+                      required: ['status'],
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Campaign status updated' } },
+            },
+          },
+          '/ads/adsets/{platform}/{accountId}/{campaignId}': {
+            get: {
+              summary: 'List ad sets for a campaign',
+              tags: ['Ads Manager - Adset'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'campaignId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Ad sets returned' } },
+            },
+            post: {
+              summary: 'Create an ad set',
+              tags: ['Ads Manager - Adset'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'campaignId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: { name: { type: 'string' }, budget: { type: 'number' } },
+                      required: ['name'],
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Ad set created' } },
+            },
+          },
+          '/ads/adsets/{platform}/{accountId}/{campaignId}/{adSetId}': {
+            get: {
+              summary: 'Get ad set details',
+              tags: ['Ads Manager - Adset'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'campaignId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'adSetId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Ad set returned' } },
+            },
+            put: {
+              summary: 'Update an ad set',
+              tags: ['Ads Manager - Adset'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'campaignId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'adSetId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: {
+                      type: 'object',
+                      properties: { name: { type: 'string' }, budget: { type: 'number' } },
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Ad set updated' } },
+            },
+            delete: {
+              summary: 'Delete an ad set',
+              tags: ['Ads Manager - Adset'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'campaignId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'adSetId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Ad set deleted' } },
+            },
+          },
+          '/ads/{platform}/{accountId}/{adSetId}': {
+            get: {
+              summary: 'List ads in an ad set',
+              tags: ['Ads Manager - Ads'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'adSetId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Ads returned' } },
+            },
+            post: {
+              summary: 'Create an ad',
+              tags: ['Ads Manager - Ads'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'adSetId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': { schema: { $ref: '#/components/schemas/AdCreateRequest' } },
+                },
+              },
+              responses: { 200: { description: 'Ad created' } },
+            },
+          },
+          '/ads/{platform}/{accountId}/{adSetId}/{adId}': {
+            get: {
+              summary: 'Get ad details',
+              tags: ['Ads Manager - Ads'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'adSetId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'adId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Ad details returned' } },
+            },
+            put: {
+              summary: 'Update an ad',
+              tags: ['Ads Manager - Ads'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'adSetId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'adId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': { schema: { $ref: '#/components/schemas/AdCreateRequest' } },
+                },
+              },
+              responses: { 200: { description: 'Ad updated' } },
+            },
+            delete: {
+              summary: 'Delete an ad',
+              tags: ['Ads Manager - Ads'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'adSetId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'adId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Ad deleted' } },
+            },
+          },
+          '/ads/creatives/{platform}/{accountId}/upload': {
+            post: {
+              summary: 'Upload an ad creative asset',
+              tags: ['Ads Manager - AdCreative'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              requestBody: {
+                required: true,
+                content: {
+                  'multipart/form-data': {
+                    schema: {
+                      type: 'object',
+                      properties: { creative: { type: 'string', format: 'binary' } },
+                    },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Creative uploaded' } },
+            },
+          },
+          '/ads/creatives/{platform}/{accountId}': {
+            get: {
+              summary: 'List uploaded creatives for a platform account',
+              tags: ['Ads Manager - AdCreative'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Creatives returned' } },
+            },
+          },
+          '/ads/creatives/{platform}/{accountId}/{creativeId}': {
+            delete: {
+              summary: 'Delete a creative asset',
+              tags: ['Ads Manager - AdCreative'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'creativeId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Creative deleted' } },
+            },
+          },
+          '/ads/analytics/{platform}/{accountId}/overview': {
+            get: {
+              summary: 'Get account-level ads analytics overview',
+              tags: ['Ads Manager - AdCreative'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Overview returned' } },
+            },
+          },
+          '/ads/analytics/{platform}/{accountId}/campaigns': {
+            get: {
+              summary: 'Get campaign analytics for an account',
+              tags: ['Ads Manager - Analytics'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Campaign analytics returned' } },
+            },
+          },
+          '/ads/analytics/{platform}/{accountId}/campaigns/{campaignId}': {
+            get: {
+              summary: 'Get analytics for a single campaign',
+              tags: ['Ads Manager - Analytics'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'campaignId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Campaign analytics returned' } },
+            },
+          },
+          '/ads/analytics/{platform}/{accountId}/adsets/{adSetId}': {
+            get: {
+              summary: 'Get ad set analytics',
+              tags: ['Ads Manager - Analytics'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'adSetId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Ad set analytics returned' } },
+            },
+          },
+          '/ads/analytics/{platform}/{accountId}/ads/{adId}': {
+            get: {
+              summary: 'Get analytics for a single ad',
+              tags: ['Ads Manager - Analytics'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'adId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Ad analytics returned' } },
+            },
+          },
+          '/ads/analytics/{platform}/{accountId}/daily': {
+            get: {
+              summary: 'Get daily ads breakdown',
+              tags: ['Ads Manager - Analytics'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Daily breakdown returned' } },
+            },
+          },
+          '/ads/analytics/{platform}/{accountId}/demographics': {
+            get: {
+              summary: 'Get demographics analytics',
+              tags: ['Ads Manager - Analytics'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Demographics returned' } },
+            },
+          },
+          '/ads/analytics/{platform}/{accountId}/placements': {
+            get: {
+              summary: 'Get ad placement breakdown',
+              tags: ['Ads Manager - Analytics'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Placements returned' } },
+            },
+          },
+          '/ads/analytics/{platform}/{accountId}/devices': {
+            get: {
+              summary: 'Get device breakdown analytics',
+              tags: ['Ads Manager - Analytics'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Device analytics returned' } },
+            },
+          },
+          '/ads/analytics/aggregated/overview': {
+            get: {
+              summary: 'Get aggregated ads analytics overview',
+              tags: ['Ads Manager - Analytics'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Aggregated overview returned' } },
+            },
+          },
+          '/ads/analytics/aggregated/campaigns': {
+            get: {
+              summary: 'Get aggregated campaign analytics',
+              tags: ['Ads Manager - Analytics'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Aggregated campaigns returned' } },
+            },
+          },
+          '/ads/analytics/aggregated/performance': {
+            get: {
+              summary: 'Get aggregated ads performance analytics',
+              tags: ['Ads Manager - Analytics'],
+              security: [{ bearerAuth: [] }],
+              responses: { 200: { description: 'Aggregated performance returned' } },
+            },
+          },
+          '/ads/audiences/{platform}/{accountId}': {
+            get: {
+              summary: 'List audiences for a platform account',
+              tags: ['Ads Manager - Audience'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Audiences returned' } },
+            },
+            post: {
+              summary: 'Create an audience in a platform account',
+              tags: ['Ads Manager - Audience'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+                { name: 'accountId', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              requestBody: {
+                required: true,
+                content: {
+                  'application/json': {
+                    schema: { $ref: '#/components/schemas/AudienceCreateRequest' },
+                  },
+                },
+              },
+              responses: { 200: { description: 'Audience created' } },
+            },
+          },
+          '/ads/targeting/{platform}/options': {
+            get: {
+              summary: 'Get targeting options for a specific platform',
+              tags: ['Ads Manager - Targeting'],
+              security: [{ bearerAuth: [] }],
+              parameters: [
+                { name: 'platform', in: 'path', required: true, schema: { type: 'string' } },
+              ],
+              responses: { 200: { description: 'Targeting options returned' } },
+            },
+          },
+        },
+      };
+
+      window.onload = function () {
+        SwaggerUIBundle({
+          spec: openapiSpec,
+          dom_id: '#swagger-ui',
+          deepLinking: true,
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+          layout: 'StandaloneLayout',
+        });
+      };
+    </script>
+  </body>
+</html>
