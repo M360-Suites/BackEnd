@@ -65,15 +65,15 @@ export const createAndSendOtp = async (email: string, reason: string = 'trial') 
         }); // Default to forgetPassword
     }
 
-    let sent: boolean = false;
+    let sent: string = 'Email not sent';
     await sendMail(email, emailSubject, emailContent, process.env.NOREPLY_EMAIL!)
       .then(() => {
         logger.info('Email Sent');
-        sent = true;
+        sent = 'Email sent';
       })
       .catch((err) => {
         logger.info('Email not Sent');
-        sent = false;
+        sent = 'Email sent';
         console.log('Error: ', err);
         throw err;
       });

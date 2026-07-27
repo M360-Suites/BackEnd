@@ -53,7 +53,7 @@ const googleCallback = async (req: GoogleAuthRequest, res: Response) => {
     const accessToken = generateToken(
       payload,
       jwtAccess,
-      { expiresIn: "7h" }
+      { expiresIn: "10m" }
     );
     const refreshToken = generateToken(
       payload,

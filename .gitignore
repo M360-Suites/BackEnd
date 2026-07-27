@@ -3,10 +3,19 @@ dist/
 backups/
 .env
 .env.copy
+.env.backup
 # .env.test
 *.log
 .DS_Store
 .husky
 Note
-*.c
-*.out
+# *.c
+# *.out
+*.code-workspace
+*.xlsx
+
+
+# Temporary ignore files
+/nginx.conf
+./Dockerfile
+./entrypoint.sh

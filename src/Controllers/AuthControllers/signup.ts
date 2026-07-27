@@ -117,6 +117,7 @@ export const startTrial = asyncHandler(async (req: CustomRequest, res: Response)
     if (existingMail) return resSender(res, 403, 'fail', 'Email Address is already in use');
 
     let emailSent = await createAndSendOtp(email, 'trial');
+    if (emailSent.includes('not')) return resSender(res, 400, 'fail', 'Email not sent, try again!');
 
     return resSender(res, 200, 'success', 'Verification Code sent successfully');
   } catch (error: any) {

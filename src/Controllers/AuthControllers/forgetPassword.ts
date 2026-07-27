@@ -40,6 +40,7 @@ export const sendCode = asyncHandler(async (req: CustomRequest, res: Response) =
     }
 
     const emailSent = await createAndSendOtp(existingMail.email, reason);
+    if (emailSent.includes('not')) return resSender(res, 400, 'fail', 'Email not sent, try again!');
 
     return resSender(
       res,

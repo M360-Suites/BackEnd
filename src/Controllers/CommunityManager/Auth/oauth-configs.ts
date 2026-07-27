@@ -1,4 +1,4 @@
-import { ComOAuthConfig, ComPlatform } from '../../../Types/types';
+                                                                                                                                                                                                                                              import { ComOAuthConfig, ComPlatform } from '../../../Types/types';
 
 let server =
   process.env.NODE_ENV === 'development'

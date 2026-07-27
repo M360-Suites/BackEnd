@@ -14,7 +14,7 @@ export const initAdsAuth = asyncHandler(
           "meta",
           "google",
           "twitter",
-          "snapchat",
+          // "snapchat",
           "linkedin",
           "tiktok",
           //   "pinterest"

@@ -7,7 +7,7 @@ import { Request } from 'express';
 config();
 
 let serverUrl =
-  process.env.NODE_ENV === 'development' ? process.env.SERVER_URL : process.env.PROD_URL;
+  process.env.NODE_ENV === 'development' ? process.env.SERVER_URL! : process.env.LIVE_CLIENT_URL!;
 
 passport.use(
   'google-signin',
@@ -15,7 +15,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-      callbackURL: `${serverUrl}/api/auth/google/callback`,
+      callbackURL: `${serverUrl}/oauth/google/callback`,
       scope: ['profile', 'email'],
       passReqToCallback: true,
     },
